@@ -1,0 +1,39 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      CONTROL_DATA_DIR: /data
+      FIREBIRD_LOCK: /data/firebird-lock
+      FIREBIRD_LOCK_TIMEOUT_SECONDS: ${FIREBIRD_LOCK_TIMEOUT_SECONDS:-5}
+      CONTROL_API_KEY: ${CONTROL_API_KEY:?Set CONTROL_API_KEY}
+      CONTROL_HUMAN_KEY: ${CONTROL_HUMAN_KEY:?Set CONTROL_HUMAN_KEY}
+      WORKSPACE_ROOT: /data/workspaces
+      CONTEXT_ROOT: /app/contexts
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: ["firebird_data:/data"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      CONTROL_API_KEY: ${CONTROL_API_KEY}
+      CONTROL_HUMAN_KEY: ${CONTROL_HUMAN_KEY}
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+volumes:
+  firebird_data:
