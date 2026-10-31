@@ -39,7 +39,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(
         runtime_registry,
         "availability",
-        lambda db, runtime: {
+        lambda db, runtime, model=None: {
             "runtime": runtime,
             "available": True,
             "installed": True,

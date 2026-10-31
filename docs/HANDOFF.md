@@ -22,7 +22,7 @@ Relay is a working local single-operator Multi-Agent Engineering Control Center,
 | Reusable workflows and default resolution | `workflow_templates.py`, `routes_workflow_templates.py` |
 | CLI/API execution and LiteLLM gateway | `runtime.py`, `gateway.py` |
 | Environment-owned LLM profile array | `llm_profiles.py`, root `.env.example` |
-| Runtime verification and availability gates | `runtime_registry.py` |
+| Per-profile provider verification and availability gates | `profile_readiness.py`, `runtime_registry.py`, migration 0011 |
 | Per-agent model readiness checks | `agent_diagnostics.py` |
 | Project/agent conversations and summaries | `agent_chat.py`, `routes_agent_chat.py` |
 | Per-agent version-pinned skills | `agent_skills.py`, `routes_agents.py` |
@@ -59,8 +59,8 @@ Firebird Embedded runs inside the API process; no Docker or database service is 
 ## Provider and agent onboarding
 
 1. Put provider keys in local environment variables. `LLM_PROFILES_JSON` accepts a JSON array of `{id, label?, runtime, model, enabled?, api_base?, api_key_env?}`. See `.env.example` for a one-line dotenv value. `api_key_env` references another variable; literal keys are not accepted in profile objects. CLI profiles use native CLI login.
-2. Restart after changing `.env`. Profile metadata sent to the browser excludes credentials. API profiles use their own endpoint/key rather than silently inheriting a different profile's global connection. Existing literal model IDs/global settings retain compatibility.
-3. In Configuration, enable/save a runtime adapter and verify a selected model/profile. Only verified, available adapters can be used to register/edit agents. Disabled/stale/missing runtimes produce global and per-agent warnings and are rejected server-side.
+2. Restart after changing `.env`. Profile metadata sent to the browser excludes credentials. API profiles use their own endpoint/key rather than silently inheriting a different profile's global connection. With a configured array, existing agents using literal model IDs must select a tested profile before execution; records and history are preserved. Legacy runtime configuration applies only without an array.
+3. Configuration → Runtime adapter setup lists every LLM_PROFILES_JSON entry. Click Test LLM on each desired profile. Only that profile becomes Ready after an actual nonce response; another profile with the same runtime remains blocked until independently tested. Disable profiles in the environment array and restart. Changed keys/configuration invalidate readiness; interrupted tests require a manual retry. Registration/editing, sessions, workflows and chats enforce the selected profile server-side. No project data is sent by these checks.
 4. In Agent Studio register agents, select runtime/model profile, and assign Skills. Assignments are per agent, maximum 10 packages and one version per package. New/unassigned agents have no automatically attached skill.
 5. Use the compact Readiness → Test control on each agent card to verify that particular model/profile. Test details show checks, errors and latency. No provider call occurs merely by opening a page. Actual tests may incur charges.
 

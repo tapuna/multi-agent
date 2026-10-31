@@ -268,7 +268,9 @@ class ChatEngine:
                         "llm_config_hash"
                     ] != signature(agent["model"]):
                         raise RuntimeError("LLM profile changed; send a new request")
-                    state = runtime_registry.availability(db, agent["runtime"])
+                    state = runtime_registry.availability(
+                        db, agent["runtime"], agent["model"]
+                    )
                     if not state["available"]:
                         raise RuntimeError(
                             "Runtime adapter unavailable: " + state["reason"]

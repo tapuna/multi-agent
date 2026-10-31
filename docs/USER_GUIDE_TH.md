@@ -126,7 +126,7 @@ Chat และ Generate context summary ใช้เฉพาะ assigned skills
 
 ## ทดสอบ Agent บนการ์ดใน Agent Studio
 
-เปิด **Agent studio** ที่มุม Readiness ของการ์ด agent กด **Test** เพื่อทดสอบเฉพาะตัวนั้น ดูสถานะและเวลาล่าสุดได้บนการ์ด กด **Test details** เพื่อขยายดู preflight, error, latency และ sanitized logs ส่วน Setup/Configuration มีเฉพาะการตั้งและ Verify runtime adapter ก่อนลงทะเบียน agent
+เปิด **Agent studio** ที่มุม Readiness ของการ์ด agent กด **Test** เพื่อทดสอบเฉพาะตัวนั้น ดูสถานะและเวลาล่าสุดได้บนการ์ด กด **Test details** เพื่อขยายดู preflight, error, latency และ sanitized logs ส่วน Setup/Configuration แสดง LLM จาก LLM_PROFILES_JSON ให้กด Test LLM แยกแต่ละ profile ก่อนลงทะเบียน agent
 
 ผลแบ่งชัดเจน:
 
@@ -147,21 +147,18 @@ API: `GET /api/agent-diagnostics` และ `POST /api/agents/{id}/diagnostics` 
 
 ## Runtime adapter ต้องพร้อมก่อน Register agent
 
-ลำดับใหม่คือ **Configuration → Runtime adapter setup → Save → Verify → Available → Register agent** การพบ CLI หรือมี API key อย่างเดียวไม่ทำให้เลือกใช้ได้
+ลำดับคือ **ตั้ง LLM_PROFILES_JSON ใน .env → restart → Configuration → Runtime adapter setup → Test LLM → Ready → Register agent**
 
-1. เตรียม CLI/login หรือ API credentials/endpoint บนเครื่องก่อน ตาม `.env` และคำแนะนำของ provider
-2. เปิด Configuration เลือก adapter ใส่ **Verification model** ที่บัญชีใช้ได้ ติ๊ก Enable แล้วกด **Save <runtime> setup**
-3. กด **Verify <runtime> adapter** เป็นคำขอสั้นจริง อาจมีค่าบริการ แต่ไม่ส่งข้อมูลโปรเจกต์ เมื่อตอบกลับตรงและคอนฟิกไม่เปลี่ยนจึงเป็น **Available** การทดสอบนี้ทำได้ก่อนมี agent และยังต้องทดสอบ model ของ agent แต่ละตัวแยกถ้าใช้ model ต่างกัน
-4. ไป Agent Studio → Register agent: เลือกได้เฉพาะ adapter ที่ Available ตัวที่ยังไม่ setup/disabled/test failed/executable หายจะถูกปิดตัวเลือก Backend บังคับกฎเดียวกัน ไม่สามารถข้ามด้วย API
-5. ปิด adapter ได้โดยเอาติ๊ก Enable ออกแล้ว Save Agent เดิมจะยังอยู่ พร้อมคำเตือนบนทุกหน้าและบนการ์ดของตัวนั้น การอัปเดตสถานะตรวจทุกประมาณ 2.5 วินาที งาน/แชตใหม่จะถูกปฏิเสธทันทีฝั่ง server งานที่กำลังเรียก provider ตรวจซ้ำก่อนรับผล; API ที่ส่งไปแล้วอาจไม่หยุดคิดค่าบริการทันที
-6. แก้ Verification model/คอนฟิก หรือเปลี่ยน provider credentials แล้วต้อง Verify ใหม่ การเปิดคืนหลัง disable ต้องผ่าน verification ใหม่เช่นกัน ไม่ใช้ผลเก่าอัตโนมัติ
+1. Setup สร้างการ์ดตามแต่ละรายการใน JSON โดยตรง แสดง runtime, model, endpoint และเหตุผลที่ยังไม่พร้อม
+2. กด **Test LLM** ของ profile ที่ต้องการ ระบบเรียกโมเดลจริงด้วยคำขอสั้น ไม่ส่งข้อมูลโปรเจกต์ และอาจมีค่าบริการ
+3. เมื่อผ่านเป็น **Ready** จึงเลือก profile นั้นใน Register/Edit agent ได้ ทั้ง UI และ backend บังคับกฎเดียวกัน
+4. การผ่าน profile A ไม่ทำให้ profile B พร้อม แม้ใช้ runtime API เดียวกัน ต้องทดสอบแยก
+5. ปิด profile ด้วย `enabled:false` ใน JSON แล้ว restart Agent เดิมยังอยู่และแสดงคำเตือน งาน/แชตใหม่ถูกปฏิเสธ
+6. เปลี่ยน model, endpoint, credential หรือเปิดคืนหลังปิดแล้ว restart ต้องทดสอบใหม่ หากแอปหยุดระหว่างทดสอบจะเป็น interrupted และไม่เรียกซ้ำเอง
 
-หลังอัปเดตรุ่นนี้ adapter ทั้งหมดเริ่มเป็น Not configured เพื่อไม่อ้างว่าคอนฟิกเก่าผ่านแล้ว Agent เดิมและประวัติไม่ถูกลบ แต่ยังใช้รันไม่ได้จนกว่าจะ setup/verify Runtime ให้พร้อม นโยบายบริษัทและ human approval ยังบังคับเหมือนเดิม
+สถานะ Ready คือผลตรวจ ณ เวลาที่ทดสอบ หาก token หมดอายุภายหลังให้ตรวจ login แล้วกดทดสอบใหม่ ระบบไม่ยิง provider ซ้ำเมื่อเปิดหน้า
 
-Available เป็นผลตรวจคอนฟิกล่าสุดและการพบ executable ปัจจุบัน ไม่ใช่การรับรองว่า provider token จะไม่มีวันหมดอายุ หากเรียกจริงล้มเหลวให้ตรวจ login และ Verify อีกครั้ง ระบบไม่ยิงโมเดลตรวจ auth ซ้ำโดยอัตโนมัติขณะเปิดหน้า
-
-API: `GET /api/runtime-adapters`, `PUT /api/runtime-adapters/{runtime}` พร้อม `{version, enabled, probe_model}`, `POST /api/runtime-adapters/{runtime}/verify` การตั้ง/verify ต้องเป็น human operator และมี audit ผลเปลี่ยนระหว่าง verify จะไม่ถูกนำกลับมาเปิดใช้งานทับค่าที่คนปิดไว้
-
+API: `GET /api/llm-profiles`, `POST /api/llm-profiles/{profile_id}/verify` ต้องเป็น human operator และบันทึก audit ผลตรวจไม่สามารถข้ามสถานะปิดหรือคอนฟิกที่เปลี่ยนระหว่างทดสอบได้
 
 Readiness tests ย้ายจาก Setup มาบนการ์ด Agent Studio แล้ว ไม่เรียก provider อัตโนมัติเมื่อเปิดหน้า ปุ่ม Test เป็นการเรียกจริงและอาจมีค่าบริการ Status/history/audit เดิมยังใช้ต่อได้ ผลที่คอนฟิกเปลี่ยนจะขึ้น Retest needed; ไม่มีปุ่มทดสอบกลุ่มอยู่ใน Setup อีกต่อไป
 
@@ -182,11 +179,11 @@ CLI profile เช่น `{"id":"code","runtime":"codex","model":"your-codex-mod
 
 หลังแก้ `.env` ให้ restart แอป แล้ว:
 
-1. Configuration → Runtime adapter setup เลือก LLM profile สำหรับ Verify adapter
-2. Agent Studio → Register/Edit agent เลือก runtime ที่ Available แล้วเลือก LLM profile จาก array ที่เข้ากับ runtime นั้น
+1. Configuration → Runtime adapter setup กด Test LLM ของ profile ที่ต้องการจนเป็น Ready
+2. Agent Studio → Register/Edit agent เลือก runtime แล้วเลือกเฉพาะ LLM profile ที่ Ready จาก array
 3. ใช้ Readiness → Test ของ agent เพื่อทดสอบ profile/model ของตัวนั้นจริง การผ่าน adapter ด้วยโปรไฟล์หนึ่งไม่ได้พิสูจน์ว่าโปรไฟล์อื่นใช้ได้ทั้งหมด
 
-ตัวเลือก disabled หรือขาด credential จะเลือกไม่ได้ Backend ตรวจซ้ำ ข้อมูลที่เก็บใน agent คือ `profile:<id>` และตอนเรียกจริงจะ resolve ไป model/endpoint/key ของโปรไฟล์นั้น API profile ที่ไม่มี endpoint กำหนดจะใช้ endpoint มาตรฐานของ provider ไม่สืบทอด `LLM_API_BASE` กลางโดยไม่ตั้งใจ ส่วน legacy model ID ที่บันทึกไว้เดิมและการใช้ค่ากลางยังรองรับเพื่อไม่ทำลายข้อมูลเก่า
+ตัวเลือก disabled หรือขาด credential จะเลือกไม่ได้ Backend ตรวจซ้ำ ข้อมูลที่เก็บใน agent คือ `profile:<id>` และตอนเรียกจริงจะ resolve ไป model/endpoint/key ของโปรไฟล์นั้น API profile ที่ไม่มี endpoint กำหนดจะใช้ endpoint มาตรฐานของ provider ไม่สืบทอด `LLM_API_BASE` กลางโดยไม่ตั้งใจ หากกำหนด array แล้ว agent เดิมที่ใช้ literal model ID ต้องเปลี่ยนมาเลือก profile ที่ผ่านทดสอบก่อนรัน ประวัติเดิมยังอยู่ ส่วนการตั้งค่ากลางแบบเดิมใช้ได้เมื่อไม่มี array เท่านั้น
 
 Snapshot เก็บชื่อโปรไฟล์ model/endpoint ที่ใช้ และ hash ของคอนฟิกโดยไม่เก็บ key หากเปลี่ยน profile ของ run ที่ยังไม่จบ จะปฏิเสธ Resume และให้เริ่ม workflow ใหม่ แชตจะ reset provider binding เมื่อคำขอถัดไปใช้ profile config ใหม่ ประวัติเก่ายังอยู่
 

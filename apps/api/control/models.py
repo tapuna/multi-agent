@@ -98,6 +98,19 @@ class RuntimeConfiguration(Base):
     result: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class LLMReadiness(Base):
+    __tablename__ = "llm_readiness"
+    profile_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(30))
+    config_hash: Mapped[str] = mapped_column(String(64))
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    result: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
 class AgentMessage(Base):
     __tablename__ = "agent_messages"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)

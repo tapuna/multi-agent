@@ -26,15 +26,16 @@ from pydantic import Field
 from .runtime_registry import ensure_available
 from . import runtime_registry
 from fastapi.encoders import jsonable_encoder
-from .llm_profiles import resolve, public_catalog
+from .llm_profiles import resolve
+from .profile_readiness import catalog
 
 router = APIRouter(tags=["agents"])
 
 
 @router.get("/api/llm-profiles")
-def llm_profiles(actor=Depends(identity)):
+def llm_profiles(db: Session = Depends(get_db), actor=Depends(identity)):
     try:
-        return public_catalog()
+        return catalog(db)
     except ValueError as error:
         raise HTTPException(422, str(error))
 
@@ -90,10 +91,12 @@ def agents(db: Session = Depends(get_db), actor=Depends(identity)):
     return [
         {
             **jsonable_encoder(a),
-            "runtime_available": runtime_registry.availability(db, a.runtime)[
+            "runtime_available": runtime_registry.availability(db, a.runtime, a.model)[
                 "available"
             ],
-            "runtime_warning": runtime_registry.availability(db, a.runtime)["reason"],
+            "runtime_warning": runtime_registry.availability(db, a.runtime, a.model)[
+                "reason"
+            ],
         }
         for a in db.scalars(select(Agent).order_by(Agent.name))
     ]
@@ -104,7 +107,7 @@ def create_agent(
     body: AgentCreate, db: Session = Depends(get_db), actor=Depends(identity)
 ):
     require_human(actor)
-    ensure_available(db, body.runtime)
+    ensure_available(db, body.runtime, body.model)
     try:
         resolve(body.model, body.runtime)
     except ValueError as error:
@@ -126,7 +129,7 @@ def edit_agent(
 ):
     require_human(actor)
     row = get(db, Agent, agent_id)
-    ensure_available(db, body.runtime)
+    ensure_available(db, body.runtime, body.model)
     try:
         resolve(body.model, body.runtime)
     except ValueError as error:
@@ -153,7 +156,7 @@ def prepare_session(
 ):
     task = get(db, Task, task_id)
     agent = get(db, Agent, body.agent_id)
-    ensure_available(db, agent.runtime)
+    ensure_available(db, agent.runtime, agent.model)
     if not agent.enabled:
         raise HTTPException(409, "Agent disabled")
     root = Path(os.getenv("WORKSPACE_ROOT", "./workspaces")).resolve()

@@ -8,6 +8,13 @@ export type LLMProfile = {
   runtime: string;
   model: string;
   enabled: boolean;
+  available: boolean;
+  status: string;
+  reason: string;
+  version: number;
+  installed?: boolean;
+  tested_at: string | null;
+  latency_ms: number | null;
   credential_configured: boolean;
   api_base: string | null;
   uses_native_auth: boolean;

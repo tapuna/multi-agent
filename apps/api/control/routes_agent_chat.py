@@ -124,7 +124,7 @@ def send(
     if not project:
         raise HTTPException(404, "Project not found")
     agent = get(db, Agent, agent_id)
-    ensure_available(db, agent.runtime)
+    ensure_available(db, agent.runtime, agent.model)
     try:
         resolve(agent.model, agent.runtime)
     except ValueError as error:

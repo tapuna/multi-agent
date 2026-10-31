@@ -17,6 +17,7 @@ from . import (
     routes_agent_chat,
     agent_diagnostics,
     runtime_registry,
+    profile_readiness,
 )
 from .workflows import WorkflowEngine
 from .gateway import settings
@@ -35,6 +36,9 @@ async def lifespan(app):
             sessionmaker(bind=engine, expire_on_commit=False)
         ).recover()
         runtime_registry.RuntimeEngine(
+            sessionmaker(bind=engine, expire_on_commit=False)
+        ).recover()
+        profile_readiness.ProfileEngine(
             sessionmaker(bind=engine, expire_on_commit=False)
         ).recover()
     yield
@@ -72,6 +76,7 @@ for routes in (
     routes_agent_chat,
     agent_diagnostics,
     runtime_registry,
+    profile_readiness,
 ):
     app.include_router(routes.router)
 

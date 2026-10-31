@@ -15,7 +15,7 @@ from .schemas import Input, Runtime
 from .runtime import executable, ADAPTERS, RuntimeRequest, redact
 from .gateway import settings
 from .services import identity, require_human, audit, commit
-from .llm_profiles import signature, resolve, allowed
+from .llm_profiles import signature, resolve, allowed, profiles
 
 router = APIRouter(tags=["runtime setup"])
 RUNTIMES = ("codex", "claude", "gemini", "api")
@@ -56,7 +56,32 @@ def fingerprint(row):
     ).hexdigest()
 
 
-def availability(db, runtime):
+def availability(db, runtime, model=None):
+    configured = profiles()
+    if configured:
+        from .profile_readiness import availability as profile_state
+
+        if model is not None:
+            return {"runtime": runtime, **profile_state(db, model, runtime)}
+        selected = [
+            profile_state(db, "profile:" + p.id, runtime)
+            for p in configured
+            if p.runtime == runtime
+        ]
+        ready = any(p["available"] for p in selected)
+        return {
+            "runtime": runtime,
+            "available": ready,
+            "installed": runtime == "api" or bool(executable(runtime)),
+            "enabled": any(p.enabled for p in configured if p.runtime == runtime),
+            "version": 0,
+            "probe_model": "",
+            "status": "available" if ready else "profiles_not_ready",
+            "reason": "At least one LLM profile is ready"
+            if ready
+            else "Test an LLM profile for this runtime in Setup first",
+            "result": {},
+        }
     row = db.get(RuntimeConfiguration, runtime)
     installed = runtime == "api" or bool(executable(runtime))
     available = bool(
@@ -91,8 +116,8 @@ def availability(db, runtime):
     }
 
 
-def ensure_available(db, runtime):
-    state = availability(db, runtime)
+def ensure_available(db, runtime, model=None):
+    state = availability(db, runtime, model)
     if not state["available"]:
         raise HTTPException(
             409,

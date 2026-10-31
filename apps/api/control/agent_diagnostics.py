@@ -78,7 +78,9 @@ def preflight(agent, db=None):
     checks = [
         {
             "name": "Runtime configured, enabled and verified",
-            "ok": runtime_registry.availability(db, agent.runtime)["available"]
+            "ok": runtime_registry.availability(db, agent.runtime, agent.model)[
+                "available"
+            ]
             if db is not None
             else False,
         },
@@ -285,7 +287,9 @@ def diagnostics(db: Session = Depends(get_db), actor=Depends(identity)):
                     latest[agent.id], exclude={"config_hash", "active_agent_id"}
                 ),
                 "stale": latest[agent.id].config_hash != configuration(agent)[1]
-                or not runtime_registry.availability(db, agent.runtime)["available"],
+                or not runtime_registry.availability(db, agent.runtime, agent.model)[
+                    "available"
+                ],
             }
             if agent.id in latest
             else None,

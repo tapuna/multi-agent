@@ -194,7 +194,9 @@ class WorkflowEngine:
                 WorkflowStep.run_id == run.id, WorkflowStep.state != "completed"
             )
         ):
-            state = runtime_registry.availability(db, run.agents[step.key]["runtime"])
+            state = runtime_registry.availability(
+                db, run.agents[step.key]["runtime"], run.agents[step.key]["model"]
+            )
             expected = run.agents[step.key].get("llm_config_hash")
             if expected and expected != signature(run.agents[step.key]["model"]):
                 raise RunStopped("LLM profile changed; start a fresh workflow")

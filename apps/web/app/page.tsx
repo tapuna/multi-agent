@@ -181,9 +181,14 @@ export default function Home() {
   const llmProfiles = useLLMProfiles();
   const [agentRuntime, setAgentRuntime] = useState("");
   const readiness = useAgentDiagnostics(page === "Agent studio");
-  const unavailableAgents = agents.filter(
-    (a) => !runtimeAdapters.some((r) => r.runtime === a.runtime && r.available),
-  );
+  function agentReady(a: Agent) {
+    return (
+      runtimeAdapters.some((r) => r.runtime === a.runtime && r.available) &&
+      (!llmProfiles.length ||
+        llmProfiles.some((p) => p.reference === a.model && p.available))
+    );
+  }
+  const unavailableAgents = agents.filter((a) => !agentReady(a));
   const load = useCallback(async () => {
     try {
       const [ps, as, system] = await Promise.all([
@@ -326,6 +331,15 @@ export default function Home() {
         )
           throw new Error(
             "Select an available runtime adapter. Set up and verify it in Configuration first.",
+          );
+        if (
+          llmProfiles.length &&
+          !llmProfiles.some(
+            (p) => p.reference === f.get("model") && p.available,
+          )
+        )
+          throw new Error(
+            "Test this LLM profile in Setup before configuring the agent.",
           );
         await api(
           editingAgent ? `agents/${editingAgent.id}` : "agents",
@@ -528,9 +542,9 @@ export default function Home() {
         <div className="content">
           {unavailableAgents.length > 0 && (
             <div className="error" role="alert" style={{ marginBottom: 16 }}>
-              Runtime adapters unavailable:{" "}
+              Agent runtime/LLM unavailable:{" "}
               {unavailableAgents.map((a) => a.name).join(", ")}. These agents
-              cannot execute. Open Configuration to enable/verify their
+              cannot execute. Open Configuration to test their LLM profiles and
               adapters.
             </div>
           )}
@@ -866,12 +880,15 @@ export default function Home() {
                       <span className="tag">{a.runtime}</span>
                     </div>
                     <h3>{a.name}</h3>
-                    {!runtimeAdapters.some(
-                      (r) => r.runtime === a.runtime && r.available,
-                    ) && (
+                    {!agentReady(a) && (
                       <p className="error" role="status">
-                        {runtimeAdapters.find((r) => r.runtime === a.runtime)
-                          ?.reason || "Runtime registry unavailable"}
+                        {llmProfiles.find((p) => p.reference === a.model)
+                          ?.reason ||
+                          (llmProfiles.length
+                            ? "Choose and test this agent's LLM profile in Setup"
+                            : runtimeAdapters.find(
+                                (r) => r.runtime === a.runtime,
+                              )?.reason || "Runtime registry unavailable")}
                       </p>
                     )}
                     <p>{a.role}</p>
@@ -887,21 +904,16 @@ export default function Home() {
                     )}
                     {a.model.startsWith("profile:") &&
                       !llmProfiles.some(
-                        (p) =>
-                          p.reference === a.model &&
-                          p.enabled &&
-                          p.credential_configured,
+                        (p) => p.reference === a.model && p.available,
                       ) && (
                         <p className="error" role="status">
-                          LLM profile unavailable. Check .env and select an
-                          enabled profile.
+                          LLM profile not ready. Test this profile in Setup
+                          first.
                         </p>
                       )}
                     <p style={{ marginTop: 14, fontSize: 10 }}>
                       {a.enabled ? "Agent enabled" : "Agent disabled"} ·{" "}
-                      {runtimeAdapters.some(
-                        (r) => r.runtime === a.runtime && r.available,
-                      )
+                      {agentReady(a)
                         ? "Runtime available"
                         : "Runtime unavailable"}
                     </p>
@@ -1292,14 +1304,10 @@ export default function Home() {
                             <option
                               key={p.id}
                               value={p.reference}
-                              disabled={!p.enabled || !p.credential_configured}
+                              disabled={!p.available}
                             >
                               {p.label} · {p.model}
-                              {!p.enabled
-                                ? " · disabled"
-                                : !p.credential_configured
-                                  ? " · credential missing"
-                                  : ""}
+                              {!p.available ? ` · ${p.reason}` : " · Ready"}
                             </option>
                           ))}
                       </select>
@@ -1398,9 +1406,7 @@ export default function Home() {
                   version={detail.task.version}
                   agents={agents.map((a) => ({
                     ...a,
-                    runtime_available: runtimeAdapters.some(
-                      (r) => r.runtime === a.runtime && r.available,
-                    ),
+                    runtime_available: agentReady(a),
                   }))}
                   onChange={() => {
                     void openTask(detail.task);

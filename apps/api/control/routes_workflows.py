@@ -190,7 +190,7 @@ def start(
     chosen = {}
     for step in steps:
         agent = get(db, Agent, step.agent_id)
-        ensure_available(db, agent.runtime)
+        ensure_available(db, agent.runtime, agent.model)
         try:
             resolve(agent.model, agent.runtime)
         except ValueError as error:
