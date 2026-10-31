@@ -57,11 +57,11 @@ def test_existing_firebird_database_is_not_recreated(client, task):
     assert len(detail["events"]) == 1
 
 
-@pytest.mark.parametrize("driver", ["sqlite", "sqlite+pysqlite", "sqlite+aiosqlite"])
-def test_retired_database_urls_fail_before_any_connection_or_file_creation(
+@pytest.mark.parametrize("driver", ["mysql+pymysql", "mssql+pyodbc", "oracle+oracledb"])
+def test_unsupported_database_urls_fail_before_any_connection_or_file_creation(
     tmp_path, monkeypatch, driver
 ):
-    file = tmp_path / "retired.db"
+    file = tmp_path / "unsupported-store"
     url = f"{driver}:///{file.as_posix()}"
     monkeypatch.setenv("DATABASE_URL", url)
     with patch("control.database_config.create_engine") as create:
@@ -76,10 +76,10 @@ def test_retired_database_urls_fail_before_any_connection_or_file_creation(
     assert not file.exists()
 
 
-def test_startup_rejects_retired_url_without_fallback(tmp_path):
-    file = tmp_path / "must-not-be-created.db"
+def test_startup_rejects_unsupported_url_without_fallback(tmp_path):
+    file = tmp_path / "must-not-be-created"
     environment = os.environ.copy()
-    environment["DATABASE_URL"] = f"sqlite:///{file.as_posix()}"
+    environment["DATABASE_URL"] = f"mysql+pymysql:///{file.as_posix()}"
     result = subprocess.run(
         [sys.executable, "-m", "control.bootstrap"],
         cwd=Path(__file__).resolve().parents[1],

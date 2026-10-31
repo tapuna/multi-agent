@@ -58,7 +58,7 @@ Agent ไม่สุ่มหยิบทุกงาน และไม่เ�
 
 Lock timeout ค่าเริ่มต้น 5 วินาที (`FIREBIRD_LOCK_TIMEOUT_SECONDS` ตั้งได้ 1–10) ชน lock ตอบ 409 ไม่ replay การเขียน ทุก process ที่ใช้ Firebird runtime เดียวกันต้องใช้ `FIREBIRD_LOCK` directory เดียวกัน สคริปต์จัดให้แล้ว
 
-เก็บ `.data/control.fdb`, `workspaces/`, `contexts/`, `skills/` และ `.env` อย่างปลอดภัย สำรองไฟล์ฐานข้อมูลโดยตรงให้หยุดแอปก่อน อย่าลบ `.db`/backups เดิมซึ่งเก็บเป็นหลักฐานย้อนหลัง แอปไม่ใช้ SQLite แล้ว
+เก็บ `.data/control.fdb`, `workspaces/`, `contexts/`, `skills/` และ `.env` อย่างปลอดภัย สำรองไฟล์ฐานข้อมูลโดยตรงให้หยุดแอปก่อน และเก็บ backup ของ Firebird แยกจาก source code
 
 Artifacts เก็บ Firebird/filesystem เป็นค่าเริ่มต้น หากใช้ S3 ตั้ง `ARTIFACT_S3_*` ตาม `.env.example` แล้ว restart ถ้า replication ล้มเหลว local ยังอยู่ retry API `/api/workflows/{id}/archive` ได้
 

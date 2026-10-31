@@ -22,7 +22,7 @@ Relay executes real task workflows; it is no longer only a Kanban prototype. Fir
 - Actual subprocess tests verify JSONL events, provider session extraction, credential filtering and a deadline when a provider never reads stdin.
 - LiteLLM HTTP transport tested against a local contract provider. Browser QA exercised Start workflow → plan → implement → review → human approval → completed, with persisted generated files. **The contract provider is a test fixture, not live AI inference.** Its database is isolated under `.data/browser-qa/`.
 - Final result: **83 tests passed**, no skips; two upstream deprecation warnings. Frontend production build/TypeScript checks, dependency consistency and unused-import checks pass.
-- Ten Alembic revisions are applied to the primary Firebird database. Existing tasks and archived source/backups are preserved. SQLite adapters/fallbacks are removed; archived `.db` files are not runtime dependencies.
+- Ten Alembic revisions are applied to the primary Firebird database. Existing tasks and Firebird backups are preserved. Database tests cover only supported engines and generic rejection of unsupported drivers.
 
 ## Runtime setup on this machine
 
@@ -36,7 +36,7 @@ No automatic deployment or push is implemented. Local merge checks approved dige
 
 S3 transport is tested with a stub; no real bucket was used. Docker/OpenShift deployment is not validated on this host. Firebird shared memory stores JSON documents; pgvector search is unavailable after the requested database switch. Multi-user identity, distributed workers and production deployment remain separate hardening work.
 
-See [Thai usage guide](USER_GUIDE_TH.md), [Firebird setup](FIREBIRD.md) and [SQLite removal evidence](SQLITE_REMOVAL.md).
+See [Thai usage guide](USER_GUIDE_TH.md) and [Firebird setup](FIREBIRD.md).
 
 ## Workflow configuration update
 
@@ -91,3 +91,7 @@ LLM_PROFILES_JSON defines an extensible array of named API/CLI profiles. Setup a
 
 Profile references persist in existing model fields, requiring no migration. Public resolved selection and configuration hashes are recorded for workflow/chat/diagnostic traceability. Changed profile configurations prevent silently resuming old work and reset conversation provider binding. Six additional tests cover metadata redaction, malformed arrays, per-profile endpoint/key routing, model allowlists, CLI/runtime compatibility, credential rotation, frozen workflow snapshots/resume rejection and conversation reset. Final suite: 83 passed; frontend production build passes.
 Browser QA verified three array entries (two enabled profiles, one disabled), Setup selection/verification with the main profile, registration using the distinct review profile, and a successful fresh readiness response for that agent via the local HTTP contract provider. No live cloud inference is claimed. Screenshot: llm-profile-array-qa.jpg.
+
+## Retired storage cleanup — 2026-10-31
+
+Removed obsolete storage documentation and historical engine-specific test names. Unsupported-driver coverage remains generic and verifies rejection before connections or files are created. Four unused local database files were signature-verified and removed at the owner's request. All nine Firebird data/backup files remain; the active application reports Firebird and retains 1 project, 9 tasks and 3 agents. No retired backend packages or database files remain in application data. Regression suite: 83 passed, two upstream deprecation warnings.

@@ -111,6 +111,6 @@ Tests explicitly stub provider readiness where credentials are not the unit unde
 - `.data/`, Firebird databases/locks/backups, archived legacy databases and runtime logs.
 - Agent `workspaces/`, session material, local artifacts and installed runtimes/dependencies/caches.
 
-These local files are preserved on the original workstation; a source checkout does not contain the user's historic task board, provider sessions or credentials. Back up `.data/control.fdb` only after stopping the application, and transfer any required operational data separately through an approved private channel. Do not re-add SQLite dependencies or delete archived source databases merely because they are not used by the application.
+Operational Firebird data remains on the original workstation; a source checkout does not contain the user's historic task board, provider sessions or credentials. Back up `.data/control.fdb` only after stopping the application, and transfer any required operational data separately through an approved private channel. Keep database dependencies aligned with the supported drivers; do not introduce a silent fallback to another engine.
 
 The repository contains source, migrations, lockfiles, standard skills/context scaffolds, usage documents, screenshots, test fixtures and handoff instructions. No license is assumed on behalf of the owner.

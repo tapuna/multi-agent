@@ -24,13 +24,9 @@ On a new checkout, first create `.venv`, install `apps/api/requirements.lock.txt
 - Firebird text BLOBs store serialized JSON documents. Existing API payloads remain objects and arrays.
 - Embeddings are stored as JSON documents on Firebird. **Vector indexing/similarity search is not implemented.** The PostgreSQL pgvector path remains compatibility code, not the default.
 
-## Existing SQLite data
+## Existing data
 
-The local legacy database was copied into Firebird, preserving project/task/agent IDs, statuses, versions, audit payloads, and session metadata. Original SQLite timestamps are interpreted as UTC; Firebird stores timestamps to 100-microsecond precision.
-
-Copied records: 1 project, 3 agents, 9 tasks, 15 existing audit events, and 1 agent session. The source `.data/control.db` remains intact. Consistent SQLite snapshots are stored in `.data/backups/`.
-
-The one-time import has finished. The importer and its launcher option have been removed. The source and backup files are archival data only and are not opened by the application. New databases are created directly as Firebird files. Retired database URLs fail configuration validation without creating or opening a file.
+Existing project/task/agent IDs, statuses, versions, audit payloads, and session metadata persist in Firebird. Firebird stores timestamps to 100-microsecond precision. New databases are created directly as Firebird files. Unsupported database URLs fail validation without creating or opening a file.
 
 ## Migrations and integrity
 
@@ -49,6 +45,6 @@ Database triggers reject audit/event/artifact updates and deletes. Provider sess
 - Evidence: [Firebird board](firebird-board.jpg), [persisted task](firebird-task.jpg).
 - The actual PowerShell launcher was exercised with `-Seed`: migrations ran idempotently, existing sample data was preserved, and both API and frontend started successfully.
 
-Provider execution and multi-agent orchestration are still disabled. New workflow schema/gateway groundwork is not an operational execution engine yet.
+Provider execution and LangGraph orchestration use Firebird persistence. Configure and verify runtimes before registering agents; see the [operator guide](USER_GUIDE_TH.md) and [handoff](HANDOFF.md) for current behavior and operational limits.
 
 References: [Firebird runtime providers](https://firebird-driver.readthedocs.io/usage-guide/configuration/), [SQLAlchemy Firebird](https://github.com/fdcastel/sqlalchemy-firebird), [lock directory configuration](https://www.firebirdsql.org/docs/chunk/en/refdocs/fbconf/fbconf-environment-variables.html).

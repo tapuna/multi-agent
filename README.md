@@ -30,13 +30,12 @@ The Python driver explicitly loads the embedded engine bundled inside `.venv`; n
 ## Data
 
 - Primary database: `.data/control.fdb`.
-- Original SQLite database: `.data/control.db`, preserved after copying existing records.
-- Consistent source snapshots: `.data/backups/`.
+- Firebird backups: `.data/backups/`.
 - Agent workspace directories: `workspaces/`.
 - Configure the data directory with `CONTROL_DATA_DIR`; an explicit `DATABASE_URL` overrides it.
 - All processes opening the same embedded database must use the same `FIREBIRD_LOCK` directory. The app uses `.data/firebird-lock` by default.
 
-Existing data was migrated: 1 project, 3 agents, 9 tasks, 15 original audit events and 1 session. The legacy source and backups are preserved as archives. The application no longer includes an importer or an alternate embedded database backend; unsupported database URLs are rejected before a connection or file can be created. See [Firebird setup](docs/FIREBIRD.md).
+Existing project/task/agent IDs and audit/session history persist in Firebird. Unsupported database URLs are rejected before a connection or file can be created. See [Firebird setup](docs/FIREBIRD.md).
 
 ## Implemented
 
@@ -114,7 +113,7 @@ cd ../..
 npm run build
 ```
 
-Database integration tests run on actual Firebird Embedded, including native lock contention. Workflow tests cover DAG/fan-in, checkpoint/session resume, cancellation, artifact integrity, Git worktrees, human approvals and local merge. Runtime tests include real subprocesses and LiteLLM HTTP transport against a local contract server; this does not claim live cloud inference. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [SQLite removal verification](docs/SQLITE_REMOVAL.md). Firebird waits up to 5 seconds per lock and returns HTTP 409 without replaying writes. Stop the frontend before building on Windows to avoid `.next` file locks.
+Database integration tests run on actual Firebird Embedded, including native lock contention. Workflow tests cover DAG/fan-in, checkpoint/session resume, cancellation, artifact integrity, Git worktrees, human approvals and local merge. Runtime tests include real subprocesses and LiteLLM HTTP transport against a local contract server; this does not claim live cloud inference. See [implementation status](docs/IMPLEMENTATION_STATUS.md). Firebird waits up to 5 seconds per lock and returns HTTP 409 without replaying writes. Stop the frontend before building on Windows to avoid `.next` file locks.
 
 Optional Docker Compose remains available with the embedded Firebird engine inside the API container; no separate database container is used. It has not been locally tested because Docker is unavailable. For setup details and next steps see [Firebird notes](docs/FIREBIRD.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
