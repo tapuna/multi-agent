@@ -39,6 +39,10 @@ Do not restore static sample CONTROL keys or legacy global `LLM_API_BASE`/`LLM_A
 
 ## Code map
 
+CLI profiles may omit model (or leave it blank). Internally it resolves to an empty model string; adapters omit --model and public catalog displays CLI default with model_selection=provider_default. API profiles still require a nonempty model. Do not invent an actual resolved model ID for a CLI default; provider selection is not observed here. Codex retains --ignore-user-config and the read-only/approval restrictions, so this does not inherit a user's config.toml model setting. Pin a model explicitly for repeatability. Three focused no-inference profile/argument checks cover defaults, explicit pins, resume IDs and API validation.
+
+The operator has now created root .env. After restart, /api/llm-profiles confirms code / Coding CLI / codex / CLI default, installed=true, status=not_tested. Execution remains disabled per that file. Do not print its credential values or replace it with the example template. This follow-up compiled the backend and ran only the three focused profile checks, not the integration smoke or cloud inference.
+
 | Concern                                                      | Source                                                                       |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | HTTP startup, recovery, app wiring                           | `apps/api/src/server.ts`, `app.ts`, `recovery.ts`                            |

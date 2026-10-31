@@ -2,6 +2,8 @@
 
 Updated: 2026-10-31 (Asia/Bangkok). Code validation below refers to implementation commit 159f4be. The subsequent documentation refresh validated examples, links and live read-only API metadata only; it did not rerun build or inference tests. See [HANDOFF.md](HANDOFF.md) for current continuation notes and [README.md](../README.md) for startup.
 
+Follow-up: CLI profiles now allow omitted/blank model and adapters omit --model in that mode, keeping runtime restrictions and resume IDs unchanged. Public catalog shows CLI default with model_selection=provider_default; API profiles still require model. Backend compilation and three focused no-inference argument/validation checks passed. The app was restarted and now reads the operator's root .env profile code (Codex, default model, installed, not tested). Execution remains disabled as configured. No provider test was triggered.
+
 The application now uses TypeScript throughout: Next.js frontend, Fastify API, LangGraph JavaScript orchestration, native Firebird Embedded access via prebuilt Koffi, and a TypeScript LLM gateway. No interpreter, ORM, migration runner or provider gateway from the former backend is invoked.
 
 Implemented: Kanban projects/tasks/dependencies/assignments/status/sprint; append-only audit and human approvals; agent registration, profile readiness and per-agent diagnostics; versioned SKILL.md packages; context precedence and project memory; project-scoped agent chat/context summaries; workflow templates/defaults/overrides; durable DAG workflows with parallelism, provider sessions, checkpoints, handoffs, artifacts and human review; isolated workspaces/Git worktrees; file preview/ZIP export; local reviewed merge; optional S3 replication.

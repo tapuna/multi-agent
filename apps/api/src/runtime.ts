@@ -203,6 +203,7 @@ export class CLIAdapter implements RuntimeAdapter {
     const binary = executable(this.provider) || this.provider,
       model = resolve(r.model, this.provider).model,
       sid = r.provider_session_id;
+    const modelArgs = model ? ["--model", model] : [];
     if (this.provider === "codex")
       return [
         binary,
@@ -213,8 +214,7 @@ export class CLIAdapter implements RuntimeAdapter {
         'sandbox_mode="read-only"',
         "-c",
         'approval_policy="never"',
-        "--model",
-        model,
+        ...modelArgs,
         "--json",
         ...(sid ? ["resume", sid] : []),
         r.prompt,
@@ -228,8 +228,7 @@ export class CLIAdapter implements RuntimeAdapter {
         "--verbose",
         "--tools",
         "",
-        "--model",
-        model,
+        ...modelArgs,
         ...(sid ? ["--resume", sid] : []),
         ...(r.prompt === "-" ? [] : [r.prompt]),
       ];
@@ -239,8 +238,7 @@ export class CLIAdapter implements RuntimeAdapter {
       "plan",
       "--output-format",
       "stream-json",
-      "--model",
-      model,
+      ...modelArgs,
       ...(sid ? ["--resume", sid] : []),
       "--prompt",
       r.prompt === "-"

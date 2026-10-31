@@ -8,7 +8,7 @@ const ProfileSchema = z.strictObject({
   id: z.string().regex(/^[a-z][a-z0-9_-]{0,49}$/),
   label: z.string().max(100).default(""),
   runtime: z.enum(runtimes).default("api"),
-  model: z.string().trim().min(1).max(150),
+  model: z.string().trim().max(150).default(""),
   enabled: z.boolean().default(true),
   api_base: z.string().nullable().optional(),
   api_key_env: z
@@ -26,6 +26,11 @@ export function profiles(): Profile[] {
     const list = z.array(ProfileSchema).max(100).parse(JSON.parse(raw));
     demand(new Set(list.map((p) => p.id)).size === list.length, 422, "");
     for (const p of list) {
+      demand(
+        p.runtime !== "api" || !!p.model,
+        422,
+        "API profiles require a model",
+      );
       demand(!p.model.startsWith("profile:"), 422, "");
       demand(
         !p.api_key_env ||
@@ -50,7 +55,7 @@ export function profiles(): Profile[] {
     return list;
   } catch {
     throw new Error(
-      "Invalid LLM_PROFILES_JSON: use an array of unique profiles with model/runtime and optional api_base/api_key_env; inline credentials are not allowed",
+      "Invalid LLM_PROFILES_JSON: use unique profile IDs and a supported runtime; API profiles require model, CLI profiles may omit it; inline credentials are not allowed",
     );
   }
 }
@@ -72,7 +77,7 @@ export function resolve(reference: string, runtime?: string) {
       "Missing credential environment variable: " + p.api_key_env,
     );
   }
-  return { model: p?.model || reference, profile: p };
+  return { model: p ? p.model : reference, profile: p };
 }
 export function executable(runtime: string) {
   if (runtime === "api") return "api";
@@ -133,6 +138,7 @@ export function describe(ref: string) {
     return {
       reference: ref,
       model,
+      model_selection: p && !p.model ? "provider_default" : "explicit",
       profile_id: p?.id || null,
       runtime: p?.runtime || null,
       api_base: p?.api_base || null,
@@ -215,7 +221,8 @@ export async function catalog(tx: Tx) {
       reference: "profile:" + p.id,
       label: p.label || p.id,
       runtime: p.runtime,
-      model: p.model,
+      model: p.model || "CLI default",
+      model_selection: p.model ? "explicit" : "provider_default",
       enabled: p.enabled,
       api_base: p.api_base || null,
       credential_configured: !p.api_key_env || !!process.env[p.api_key_env],

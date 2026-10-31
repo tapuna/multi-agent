@@ -31,12 +31,14 @@ npm run dev
 
 แต่ละ profile ต้องผ่านการทดสอบของตัวเอง ผลผ่านของ A ไม่ปลดล็อก B แม้ใช้ runtime เดียวกัน เปลี่ยน model, endpoint, credential หรือปิด profile แล้ว restart จะต้องตรวจความพร้อมใหม่ การกดทดสอบเรียก provider จริงและอาจมีค่าบริการ การเปิดหน้าจอเฉย ๆ ไม่เรียกโมเดล
 
-| Runtime                       | การตั้งค่า                                                                                             |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `api`                         | OpenAI-compatible endpoint, Anthropic Messages หรือ Gemini GenerateContent ผ่าน gateway TypeScript     |
-| `codex` / `claude` / `gemini` | ติดตั้ง CLI และ login บนเครื่องก่อน ใช้ model ID ของ CLI และไม่ใส่ `api_base`/`api_key_env` ใน profile |
+| Runtime                       | การตั้งค่า                                                                                                                                               |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api`                         | OpenAI-compatible endpoint, Anthropic Messages หรือ Gemini GenerateContent ผ่าน gateway TypeScript                                                       |
+| `codex` / `claude` / `gemini` | ติดตั้ง CLI และ login บนเครื่องก่อน ไม่ใส่ `model` ได้เพื่อให้ CLI ใช้ default หรือใส่ model ID เพื่อตรึงรุ่น ไม่ใส่ `api_base`/`api_key_env` ใน profile |
 
 API profile เลือก endpoint/key แยกจากกัน Native API ใช้ prefix `openai/`, `anthropic/`, `gemini/` หรือ provider ที่รองรับใน gateway สำหรับ OpenAI-compatible provider อื่นให้ใช้ `openai/<model-id>` พร้อม `api_base` ที่ลงท้ายถึง API version เช่น `/v1` โดยไม่ใส่ `/chat/completions`
+
+CLI profile ที่ไม่ระบุ `model` จะแสดง **CLI default** และไม่ส่ง `--model` ให้ CLI เลือก default ของตัวเอง ไม่ได้เลือกโมเดลตามความยากของงาน ส่วน API profile ยังต้องระบุ model สำหรับ Codex ตัว adapter คง `--ignore-user-config` ไว้ จึงไม่โหลด model จาก `config.toml` ส่วนตัว หากต้องการตรึงรุ่นให้ระบุ model ใน profile
 
 เก็บ key เฉพาะ `.env` หรือ environment ของเครื่อง ไม่ใส่ key ตรงใน JSON, task หรือ repository ข้อมูล profile ที่ browser ได้รับไม่มีค่า key
 
