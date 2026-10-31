@@ -25,6 +25,7 @@ import {
   describe,
   executable,
   redact,
+  profileLog,
 } from "./profiles.js";
 import { ADAPTERS } from "./runtime.js";
 import { snapshot, resolveSkills } from "./knowledge.js";
@@ -35,12 +36,32 @@ async function testProfile(
 ) {
   const started = Date.now(),
     ref = "profile:" + profileId;
+  const logs: { at: string; kind: string; message: string }[] = [];
+  let lastPersist = 0;
+  const log = async (kind: string, message: string, flush = false) => {
+    logs.push({ at: now(), kind, message: profileLog(message) });
+    if (logs.length > 40) logs.shift();
+    if (!flush && Date.now() - lastPersist < 1000) return;
+    lastPersist = Date.now();
+    await transaction(async (tx) => {
+      const r = await tx.one("llm_readiness", profileId, true);
+      if (r.version !== version || r.status !== "running") return;
+      await tx.update("llm_readiness", profileId, {
+        result: { ...r.result, logs: [...logs] },
+      });
+    });
+  };
   try {
     const p = profiles().find((p) => p.id === profileId);
     demand(p, 409, "Profile was removed");
     const token = "RELAY_OK_" + uid().replaceAll("-", "").slice(0, 16),
       workspace = path.join(WORK, "llm-checks", profileId, uid());
     fs.mkdirSync(workspace, { recursive: true });
+    await log(
+      "info",
+      `Preflight passed. Starting ${p.runtime.toUpperCase()} provider test (${p.model || "CLI default"}); deadline 30 seconds.`,
+      true,
+    );
     const check = () =>
       transaction(async (tx) => {
         const r = await tx.one("llm_readiness", profileId),
@@ -65,10 +86,30 @@ async function testProfile(
         purpose: "diagnostic",
         timeout_seconds: 30,
       },
-      () => {},
+      async (kind, data) => {
+        if (kind === "runtime.log")
+          await log("stderr", String(data.message || ""));
+        else if (kind === "runtime.request")
+          await log(
+            "info",
+            "Sending the verification request to the configured API.",
+          );
+        else if (kind === "runtime.event")
+          await log("event", "CLI event: " + String(data.type || "unknown"));
+        else if (kind === "session.provider_bound")
+          await log("info", "Provider session established.");
+      },
       check,
     );
     await check();
+    logs.push({
+      at: now(),
+      kind: "info",
+      message:
+        result.content.trim() === token
+          ? "Provider returned the expected verification response."
+          : "Provider returned an unexpected response; profile is not ready.",
+    });
     await transaction(async (tx) => {
       const r = await tx.one("llm_readiness", profileId, true);
       if (r.version !== version || r.status !== "running") return;
@@ -82,6 +123,7 @@ async function testProfile(
             ? "Provider returned the expected fresh response"
             : "Provider did not return the verification token",
           connection: describe(ref),
+          logs: logs.slice(-40),
         },
       });
       await tx.audit(
@@ -95,11 +137,12 @@ async function testProfile(
       const r = await tx.one("llm_readiness", profileId, true);
       if (r.version !== version || r.status !== "running") return;
       const message = redact((e as Error).message);
+      logs.push({ at: now(), kind: "error", message: profileLog(message) });
       await tx.update("llm_readiness", profileId, {
         status: "failed",
         tested_at: now(),
         latency_ms: Date.now() - started,
-        result: { message },
+        result: { message, logs: logs.slice(-40) },
       });
       await tx.audit("system:llm-setup", "llm.profile.failed", {
         profile_id: profileId,
@@ -217,7 +260,11 @@ export function agentRoutes(app: FastifyInstance) {
     z.strictObject({}),
     async ({ tx, actor, params: p, defer }) => {
       human(actor);
-      demand(executionEnabled(), 409, "Execution disabled");
+      demand(
+        executionEnabled(),
+        409,
+        "Execution disabled: set AGENT_EXECUTION_ENABLED=1 in the root .env and restart the application. No CLI/API request has started.",
+      );
       const profile = profiles().find((x) => x.id === p.profile_id);
       demand(profile, 404, "Profile not found in LLM_PROFILES_JSON");
       const state = await readiness(

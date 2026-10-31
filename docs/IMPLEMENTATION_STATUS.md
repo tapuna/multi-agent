@@ -1,5 +1,7 @@
 # Node.js migration status
 
+Latest follow-up: profile Setup includes explicit preflight blockers and Test details & logs. With the operator's execution flag off, UI shows Blocked, disables the test button and explains that no CLI/API was started. Real test attempts retain a bounded sanitized log tail in Firebird, including progress, CLI event types, stderr and completion/failure. Backend/frontend build and five focused no-inference checks passed; the blocked UI was inspected on localhost. No provider invocation or environment enablement change was made.
+
 Updated: 2026-10-31 (Asia/Bangkok). Code validation below refers to implementation commit 159f4be. The subsequent documentation refresh validated examples, links and live read-only API metadata only; it did not rerun build or inference tests. See [HANDOFF.md](HANDOFF.md) for current continuation notes and [README.md](../README.md) for startup.
 
 Follow-up: CLI profiles now allow omitted/blank model and adapters omit --model in that mode, keeping runtime restrictions and resume IDs unchanged. Public catalog shows CLI default with model_selection=provider_default; API profiles still require model. Backend compilation and three focused no-inference argument/validation checks passed. The app was restarted and now reads the operator's root .env profile code (Codex, default model, installed, not tested). Execution remains disabled as configured. No provider test was triggered.

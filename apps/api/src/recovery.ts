@@ -60,7 +60,7 @@ export async function recover() {
       if (r.status === "running") {
         await tx.update("llm_readiness", r.profile_id, {
           status: "interrupted",
-          result: { message: "Application restarted; test again" },
+          result: { ...r.result, message: "Application restarted; test again" },
         });
         await tx.audit("system:llm-setup", "llm.profile.interrupted", {
           profile_id: r.profile_id,
@@ -72,6 +72,7 @@ export async function recover() {
         await tx.update("llm_readiness", r.profile_id, {
           status: "stale",
           result: {
+            ...r.result,
             message:
               "Profile changed, disabled or runtime migrated; test again before use",
           },

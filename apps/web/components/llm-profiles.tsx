@@ -18,6 +18,14 @@ export type LLMProfile = {
   credential_configured: boolean;
   api_base: string | null;
   uses_native_auth: boolean;
+  execution_enabled: boolean;
+  can_test: boolean;
+  test_blockers: string[];
+  test_checks: { name: string; ok: boolean; detail: string }[];
+  test_result: {
+    message: string;
+    logs: { at: string; kind: string; message: string }[];
+  } | null;
 };
 export function useLLMProfiles() {
   const [profiles, setProfiles] = useState<LLMProfile[]>([]);

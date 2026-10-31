@@ -56,6 +56,7 @@ function ProfileCard({ profile: p }: { profile: LLMProfile }) {
     }
   }
   const running = busy || waiting || p.status === "running";
+  const blocked = !!p.test_blockers?.length;
   return (
     <article className="panel-card">
       <h3>{p.label}</h3>
@@ -64,15 +65,24 @@ function ProfileCard({ profile: p }: { profile: LLMProfile }) {
       >
         {running
           ? "Testing…"
-          : p.available
-            ? "Ready"
-            : p.status || "Not tested"}
+          : blocked
+            ? "Blocked"
+            : p.available
+              ? "Ready"
+              : p.status || "Not tested"}
       </span>
       <p className="code" style={{ marginTop: 12 }}>
         {p.runtime.toUpperCase()} · {p.model}
       </p>
       {p.api_base && <p className="subtitle">{p.api_base}</p>}
       <p className="subtitle">{p.reason}</p>
+      {blocked && (
+        <div role="status" className="error" style={{ marginTop: 12 }}>
+          {p.test_blockers.map((message) => (
+            <p key={message}>{message}</p>
+          ))}
+        </div>
+      )}
       <small>Source: LLM_PROFILES_JSON · {p.id}</small>
       {p.tested_at && (
         <p className="subtitle">
@@ -86,6 +96,7 @@ function ProfileCard({ profile: p }: { profile: LLMProfile }) {
         style={{ marginTop: 16 }}
         disabled={
           running ||
+          p.can_test === false ||
           !p.enabled ||
           !p.credential_configured ||
           p.installed === false
@@ -100,6 +111,46 @@ function ProfileCard({ profile: p }: { profile: LLMProfile }) {
           {error}
         </p>
       )}
+      <details
+        style={{ marginTop: 16, fontSize: 12 }}
+        open={blocked || undefined}
+      >
+        <summary style={{ cursor: "pointer" }}>Test details &amp; logs</summary>
+        <ul style={{ paddingLeft: 18, marginTop: 10 }}>
+          {p.test_checks?.map((check) => (
+            <li key={check.name} style={{ marginBottom: 8 }}>
+              <strong>
+                {check.ok ? "PASS" : "BLOCKED"} · {check.name}
+              </strong>
+              <br />
+              {check.detail}
+            </li>
+          ))}
+        </ul>
+        {p.test_result?.message && (
+          <p className="subtitle">Last test: {p.test_result.message}</p>
+        )}
+        <pre
+          aria-label={`Test logs for ${p.label}`}
+          style={{
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            maxHeight: 240,
+            overflow: "auto",
+            padding: 12,
+            background: "#101216",
+            borderRadius: 8,
+          }}
+        >
+          {p.test_result?.logs?.length
+            ? p.test_result.logs
+                .map((log) => `${log.at} [${log.kind}] ${log.message}`)
+                .join("\n")
+            : blocked
+              ? "Preflight blocked. No provider was started, so no CLI/API logs exist."
+              : "No provider test logs yet. Logs appear here after starting a test."}
+        </pre>
+      </details>
     </article>
   );
 }

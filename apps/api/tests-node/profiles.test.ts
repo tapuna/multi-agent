@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { profiles, resolve, allowed } from "../src/profiles.js";
+import {
+  profiles,
+  resolve,
+  allowed,
+  profileChecks,
+  profileLog,
+  catalog,
+} from "../src/profiles.js";
 import { CLIAdapter } from "../src/runtime.js";
 
 test("CLI profiles may omit model without changing runtime restrictions", () => {
@@ -80,5 +87,73 @@ test("API profiles still reject a missing or blank model", () => {
   } finally {
     if (saved === undefined) delete process.env.LLM_PROFILES_JSON;
     else process.env.LLM_PROFILES_JSON = saved;
+  }
+});
+
+test("Disabled execution is visible as a preflight blocker without starting a runtime", () => {
+  const saved = { ...process.env };
+  try {
+    process.env.LLM_PROFILES_JSON = JSON.stringify([
+      { id: "code", runtime: "codex" },
+    ]);
+    process.env.AGENT_EXECUTION_ENABLED = "0";
+    process.env.CONTROL_ALLOWED_MODELS = "";
+    const checks = profileChecks(profiles()[0], true);
+    assert.equal(checks[0].ok, false);
+    assert.match(checks[0].detail, /AGENT_EXECUTION_ENABLED=1/);
+    assert.match(checks[0].detail, /No CLI\/API request has started/);
+    process.env.AGENT_EXECUTION_ENABLED = "1";
+    assert.equal(
+      profileChecks(profiles()[0], true).every((c) => c.ok),
+      true,
+    );
+  } finally {
+    for (const key of Object.keys(process.env))
+      if (!(key in saved)) delete process.env[key];
+    Object.assign(process.env, saved);
+  }
+});
+
+test("Public test logs redact keys, verification tokens and terminal controls", async () => {
+  const saved = { ...process.env };
+  try {
+    const secret = "local-diagnostic-secret";
+    process.env.LOG_TEST_API_KEY = secret;
+    process.env.AGENT_EXECUTION_ENABLED = "0";
+    process.env.CONTROL_ALLOWED_MODELS = "";
+    process.env.LLM_PROFILES_JSON = JSON.stringify([
+      {
+        id: "main",
+        runtime: "api",
+        model: "openai/unit",
+        api_key_env: "LOG_TEST_API_KEY",
+      },
+    ]);
+    const message = `\u001b[31mfailed ${secret} RELAY_OK_abcdef0123456789\u001b[0m`;
+    assert.equal(profileLog(message).includes(secret), false);
+    assert.equal(profileLog(message).includes("\u001b"), false);
+    const tx = {
+      all: async () => [
+        {
+          status: "failed",
+          version: 1,
+          config_hash: "old",
+          result: { message, logs: [{ at: "now", kind: "stderr", message }] },
+        },
+      ],
+    };
+    const rows = await catalog(tx as any);
+    assert.equal(rows[0].can_test, false);
+    assert.ok(rows[0].test_blockers.length);
+    assert.equal(rows[0].test_result?.logs.length, 1);
+    assert.equal(JSON.stringify(rows).includes(secret), false);
+    assert.equal(
+      rows[0].test_result?.logs[0].message.includes("RELAY_OK_"),
+      false,
+    );
+  } finally {
+    for (const key of Object.keys(process.env))
+      if (!(key in saved)) delete process.env[key];
+    Object.assign(process.env, saved);
   }
 });

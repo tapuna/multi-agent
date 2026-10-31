@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import { hash, stable, demand } from "./config.js";
+import { hash, stable, demand, executionEnabled } from "./config.js";
 import type { Tx } from "./db.js";
 export const runtimes = ["codex", "claude", "gemini", "api"] as const;
 const ProfileSchema = z.strictObject({
@@ -216,20 +216,90 @@ export async function ensureReady(tx: Tx, runtime: string, model: string) {
 }
 export async function catalog(tx: Tx) {
   return Promise.all(
-    profiles().map(async (p) => ({
-      id: p.id,
-      reference: "profile:" + p.id,
-      label: p.label || p.id,
-      runtime: p.runtime,
-      model: p.model || "CLI default",
-      model_selection: p.model ? "explicit" : "provider_default",
-      enabled: p.enabled,
-      api_base: p.api_base || null,
-      credential_configured: !p.api_key_env || !!process.env[p.api_key_env],
-      uses_native_auth: p.runtime !== "api" || !p.api_key_env,
-      ...(await readiness(tx, "profile:" + p.id, p.runtime)),
-    })),
+    profiles().map(async (p) => {
+      const state = await readiness(tx, "profile:" + p.id, p.runtime);
+      const checks = profileChecks(p, !!state.installed);
+      const result = (await tx.all("llm_readiness", "PROFILE_ID=?", [p.id]))[0]
+        ?.result;
+      return {
+        id: p.id,
+        reference: "profile:" + p.id,
+        label: p.label || p.id,
+        runtime: p.runtime,
+        model: p.model || "CLI default",
+        model_selection: p.model ? "explicit" : "provider_default",
+        enabled: p.enabled,
+        api_base: p.api_base || null,
+        credential_configured: !p.api_key_env || !!process.env[p.api_key_env],
+        uses_native_auth: p.runtime !== "api" || !p.api_key_env,
+        ...state,
+        execution_enabled: executionEnabled(),
+        can_test: checks.every((c) => c.ok) && state.status !== "running",
+        test_checks: checks,
+        test_blockers: checks.filter((c) => !c.ok).map((c) => c.detail),
+        test_result: result
+          ? {
+              message: redact(String(result.message || "")),
+              logs: Array.isArray(result.logs)
+                ? result.logs
+                    .slice(-40)
+                    .map((l: any) => ({
+                      at: String(l.at || ""),
+                      kind: String(l.kind || "info"),
+                      message: profileLog(String(l.message || "")),
+                    }))
+                : [],
+            }
+          : null,
+      };
+    }),
   );
+}
+export function profileChecks(p: Profile, installed: boolean) {
+  return [
+    {
+      name: "Execution enabled",
+      ok: executionEnabled(),
+      detail: executionEnabled()
+        ? "Agent execution is enabled."
+        : "Execution disabled: set AGENT_EXECUTION_ENABLED=1 in the root .env and restart the application. No CLI/API request has started.",
+    },
+    {
+      name: "Profile enabled",
+      ok: p.enabled,
+      detail: p.enabled
+        ? "Profile is enabled."
+        : "Enable this profile in LLM_PROFILES_JSON and restart.",
+    },
+    {
+      name: "Runtime installed",
+      ok: installed,
+      detail: installed
+        ? "Runtime executable is available."
+        : "Install the CLI or configure its executable path, then restart.",
+    },
+    {
+      name: "Credential variable",
+      ok: !p.api_key_env || !!process.env[p.api_key_env],
+      detail:
+        !p.api_key_env || process.env[p.api_key_env]
+          ? "Credential reference is configured, or the runtime uses native login."
+          : "Set the credential environment variable referenced by api_key_env and restart.",
+    },
+    {
+      name: "Model allowlist",
+      ok: allowed("profile:" + p.id),
+      detail: allowed("profile:" + p.id)
+        ? "Profile/model is allowed."
+        : "Add this profile/model to CONTROL_ALLOWED_MODELS or choose an allowed profile.",
+    },
+  ];
+}
+export function profileLog(text: string) {
+  return redact(text)
+    .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "")
+    .replace(/RELAY_OK_[a-f0-9]+/g, "[verification token]")
+    .slice(0, 1000);
 }
 export function redact(text: string) {
   for (const [key, value] of Object.entries(process.env))

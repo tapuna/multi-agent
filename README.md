@@ -29,6 +29,8 @@ npm run dev
 3. เปิด **Configuration → Runtime adapter setup** แต่ละรายการใน array จะแสดงเป็นการ์ด กด **Test LLM** ของ profile ที่ต้องการจนเป็น **Ready**
 4. เปิด **Agent Studio → Register/Edit agent** เลือก runtime และ profile ที่ Ready แล้วกำหนด role และ Skills ให้ agent นั้น
 
+หาก Test LLM ถูกปิดและแสดง **Blocked** ให้ดู **Test details & logs** บนการ์ด จะเห็น preflight ที่ไม่ผ่านและวิธีแก้ เช่น execution ยังปิดอยู่ กรณีนี้ยังไม่เรียก CLI จึงไม่มี log จาก provider เมื่อเริ่มทดสอบจริงแล้วจะแสดง progress/events, stderr และผลล่าสุด พร้อมเวลา โดยเก็บข้อความล่าสุดแบบจำกัดและปิดบังค่า credential
+
 แต่ละ profile ต้องผ่านการทดสอบของตัวเอง ผลผ่านของ A ไม่ปลดล็อก B แม้ใช้ runtime เดียวกัน เปลี่ยน model, endpoint, credential หรือปิด profile แล้ว restart จะต้องตรวจความพร้อมใหม่ การกดทดสอบเรียก provider จริงและอาจมีค่าบริการ การเปิดหน้าจอเฉย ๆ ไม่เรียกโมเดล
 
 | Runtime                       | การตั้งค่า                                                                                                                                               |
