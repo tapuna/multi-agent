@@ -6,6 +6,8 @@ Run `npm run setup:firebird` once. The installer downloads official Firebird 5.0
 
 Default database: `.data/control.fdb`. Override with `DATABASE_URL=firebird://SYSDBA@/D:/path/control.fdb?charset=UTF8`. Legacy URL spelling is accepted for migration compatibility. Only local embedded paths are supported by this build. `FIREBIRD_CLIENT_LIBRARY` selects an existing native client library; `FIREBIRD_RUNTIME_DIR` selects the downloaded runtime directory.
 
+The installer reads FIREBIRD_RUNTIME_DIR from process environment; it does not load .env. The application loads the root .env. If overriding CONTROL_DATA_DIR, explicitly set the engine path as needed; otherwise its default lookup moves under the new data directory. Normal installations can retain all default paths.
+
 Transactions use READ COMMITTED RECORD_VERSION and a bounded lock wait, default 5 seconds. Set `FIREBIRD_LOCK_TIMEOUT_SECONDS=1..10`. Lock conflicts return HTTP 409 with database_busy and Retry-After. Writes are not automatically replayed.
 
 Existing schemas through revision 0011 are adopted without dropping tables or clearing data. New installs create the app schema, foreign keys/unique constraints and the immutable audit trigger. JavaScript checkpoints use nodejs: namespaces to avoid interpreting old serialized graph state.

@@ -1,5 +1,7 @@
 # Node.js migration status
 
+Updated: 2026-10-31 (Asia/Bangkok). Code validation below refers to implementation commit 159f4be. The subsequent documentation refresh validated examples, links and live read-only API metadata only; it did not rerun build or inference tests. See [HANDOFF.md](HANDOFF.md) for current continuation notes and [README.md](../README.md) for startup.
+
 The application now uses TypeScript throughout: Next.js frontend, Fastify API, LangGraph JavaScript orchestration, native Firebird Embedded access via prebuilt Koffi, and a TypeScript LLM gateway. No interpreter, ORM, migration runner or provider gateway from the former backend is invoked.
 
 Implemented: Kanban projects/tasks/dependencies/assignments/status/sprint; append-only audit and human approvals; agent registration, profile readiness and per-agent diagnostics; versioned SKILL.md packages; context precedence and project memory; project-scoped agent chat/context summaries; workflow templates/defaults/overrides; durable DAG workflows with parallelism, provider sessions, checkpoints, handoffs, artifacts and human review; isolated workspaces/Git worktrees; file preview/ZIP export; local reviewed merge; optional S3 replication.

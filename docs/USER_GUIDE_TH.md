@@ -6,11 +6,14 @@
 
 ```powershell
 npm ci
+if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
 npm run setup:firebird
 npm run dev
 ```
 
 เปิด http://127.0.0.1:3000 คำสั่งเดียวเปิดทั้งหน้าเว็บและ API กด Ctrl+C เพื่อหยุดทั้งคู่ ไม่ต้องติดตั้ง database server หรือ Docker
+
+ไฟล์ตัวอย่างเริ่มด้วย `AGENT_EXECUTION_ENABLED=0` และ `LLM_PROFILES_JSON=[]` จึงใช้งาน board ได้ก่อนโดยยังไม่เรียกโมเดล อย่าเขียนทับ `.env` เดิมหากมีอยู่แล้ว ดูสถานะส่งต่องานล่าสุดใน [HANDOFF.md](HANDOFF.md)
 
 หากต้องการแบบ build แล้ว:
 
