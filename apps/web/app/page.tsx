@@ -1123,7 +1123,7 @@ export default function Home() {
                   {page === "Workspaces"
                     ? "Open a task and prepare a session to allocate a unique workspace directory. Git worktree provisioning and a file explorer follow in Phase 2."
                     : page === "Orchestration"
-                      ? "LangGraph and LiteLLM dependencies are included. Execution graphs, parallel runs, handoffs and checkpoints follow in Phase 2."
+                      ? "LangGraph runs on Node.js with parallel workflows, handoffs, durable checkpoints and human approval. Configure and test each LLM profile before use."
                       : page === "Execution monitor"
                         ? "Follow agent activity, runtime events and artifacts in Execution monitor."
                         : page === "Setup"

@@ -1,0 +1,1512 @@
+{
+  "agents": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "name": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "NAME"
+      },
+      "role": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ROLE"
+      },
+      "runtime": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "RUNTIME"
+      },
+      "model": {
+        "type": "VARCHAR(150)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "MODEL"
+      },
+      "enabled": {
+        "type": "BOOLEAN",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ENABLED"
+      },
+      "skill_refs": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "SKILL_REFS"
+      },
+      "skills_version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "SKILLS_VERSION"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      }
+    ],
+    "foreign": [],
+    "dbName": "AGENTS"
+  },
+  "agent_conversations": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "project_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "PROJECT_ID"
+      },
+      "agent_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "AGENT_ID"
+      },
+      "provider_session_id": {
+        "type": "VARCHAR(250)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "PROVIDER_SESSION_ID"
+      },
+      "binding_hash": {
+        "type": "VARCHAR(64)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "BINDING_HASH"
+      },
+      "status": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATUS"
+      },
+      "active_message_id": {
+        "type": "VARCHAR(36)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "ACTIVE_MESSAGE_ID"
+      },
+      "error": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "ERROR"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["project_id", "agent_id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "project_id",
+        "table": "projects",
+        "target": "id"
+      },
+      {
+        "column": "agent_id",
+        "table": "agents",
+        "target": "id"
+      }
+    ],
+    "dbName": "AGENT_CONVERSATIONS"
+  },
+  "agent_diagnostics": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "agent_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "AGENT_ID"
+      },
+      "active_agent_id": {
+        "type": "VARCHAR(36)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "ACTIVE_AGENT_ID"
+      },
+      "status": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATUS"
+      },
+      "config_hash": {
+        "type": "VARCHAR(64)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CONFIG_HASH"
+      },
+      "config_snapshot": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "CONFIG_SNAPSHOT"
+      },
+      "result": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "RESULT"
+      },
+      "latency_ms": {
+        "type": "INTEGER",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "LATENCY_MS"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["active_agent_id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "agent_id",
+        "table": "agents",
+        "target": "id"
+      }
+    ],
+    "dbName": "AGENT_DIAGNOSTICS"
+  },
+  "agent_messages": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "conversation_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CONVERSATION_ID"
+      },
+      "sequence": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "SEQUENCE"
+      },
+      "role": {
+        "type": "VARCHAR(20)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ROLE"
+      },
+      "kind": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "KIND"
+      },
+      "content": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CONTENT"
+      },
+      "state": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATE"
+      },
+      "context_snapshot": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "CONTEXT_SNAPSHOT"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["conversation_id", "sequence"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "conversation_id",
+        "table": "agent_conversations",
+        "target": "id"
+      }
+    ],
+    "dbName": "AGENT_MESSAGES"
+  },
+  "agent_sessions": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "task_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_ID"
+      },
+      "agent_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "AGENT_ID"
+      },
+      "provider_session_id": {
+        "type": "VARCHAR(250)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "PROVIDER_SESSION_ID"
+      },
+      "workspace_path": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "WORKSPACE_PATH"
+      },
+      "state": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATE"
+      },
+      "context_snapshot": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "CONTEXT_SNAPSHOT"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "task_id",
+        "table": "tasks",
+        "target": "id"
+      },
+      {
+        "column": "agent_id",
+        "table": "agents",
+        "target": "id"
+      }
+    ],
+    "dbName": "AGENT_SESSIONS"
+  },
+  "approvals": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "task_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_ID"
+      },
+      "task_version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_VERSION"
+      },
+      "kind": {
+        "type": "VARCHAR(20)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "KIND"
+      },
+      "actor": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ACTOR"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "task_id",
+        "table": "tasks",
+        "target": "id"
+      }
+    ],
+    "dbName": "APPROVALS"
+  },
+  "audit_events": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "task_id": {
+        "type": "VARCHAR(36)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_ID"
+      },
+      "actor": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ACTOR"
+      },
+      "action": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ACTION"
+      },
+      "payload": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "PAYLOAD"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "task_id",
+        "table": "tasks",
+        "target": "id"
+      }
+    ],
+    "dbName": "AUDIT_EVENTS"
+  },
+  "dependencies": {
+    "columns": {
+      "task_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_ID"
+      },
+      "depends_on_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "DEPENDS_ON_ID"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["task_id", "depends_on_id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "task_id",
+        "table": "tasks",
+        "target": "id"
+      },
+      {
+        "column": "depends_on_id",
+        "table": "tasks",
+        "target": "id"
+      }
+    ],
+    "dbName": "DEPENDENCIES"
+  },
+  "graph_checkpoints": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "thread_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "THREAD_ID"
+      },
+      "namespace": {
+        "type": "VARCHAR(200)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "NAMESPACE"
+      },
+      "checkpoint_id": {
+        "type": "VARCHAR(64)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CHECKPOINT_ID"
+      },
+      "parent_id": {
+        "type": "VARCHAR(64)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "PARENT_ID"
+      },
+      "data": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "DATA"
+      },
+      "metadata_data": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "METADATA_DATA"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["thread_id", "namespace", "checkpoint_id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "thread_id",
+        "table": "workflow_runs",
+        "target": "id"
+      }
+    ],
+    "dbName": "GRAPH_CHECKPOINTS"
+  },
+  "graph_writes": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "identity_hash": {
+        "type": "VARCHAR(64)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "IDENTITY_HASH"
+      },
+      "thread_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "THREAD_ID"
+      },
+      "namespace": {
+        "type": "VARCHAR(200)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "NAMESPACE"
+      },
+      "checkpoint_id": {
+        "type": "VARCHAR(64)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CHECKPOINT_ID"
+      },
+      "task_id": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_ID"
+      },
+      "position": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "position"
+      },
+      "channel": {
+        "type": "VARCHAR(200)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CHANNEL"
+      },
+      "data": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "DATA"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["identity_hash"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "thread_id",
+        "table": "workflow_runs",
+        "target": "id"
+      }
+    ],
+    "dbName": "GRAPH_WRITES"
+  },
+  "llm_readiness": {
+    "columns": {
+      "profile_id": {
+        "type": "VARCHAR(50)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "PROFILE_ID"
+      },
+      "version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "VERSION"
+      },
+      "status": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATUS"
+      },
+      "config_hash": {
+        "type": "VARCHAR(64)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CONFIG_HASH"
+      },
+      "latency_ms": {
+        "type": "INTEGER",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "LATENCY_MS"
+      },
+      "tested_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "TESTED_AT"
+      },
+      "result": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "RESULT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["profile_id"]
+      }
+    ],
+    "foreign": [],
+    "dbName": "LLM_READINESS"
+  },
+  "projects": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "name": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "NAME"
+      },
+      "key": {
+        "type": "VARCHAR(10)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "KEY"
+      },
+      "description": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "DESCRIPTION"
+      },
+      "repository_path": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "REPOSITORY_PATH"
+      },
+      "default_workflow_id": {
+        "type": "VARCHAR(36)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "DEFAULT_WORKFLOW_ID"
+      },
+      "workflow_config_version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "WORKFLOW_CONFIG_VERSION"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["key"]
+      }
+    ],
+    "foreign": [],
+    "dbName": "PROJECTS"
+  },
+  "project_memories": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "project_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "PROJECT_ID"
+      },
+      "content": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CONTENT"
+      },
+      "embedding": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": false,
+        "identity": false,
+        "json": true,
+        "dbName": "EMBEDDING"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "project_id",
+        "table": "projects",
+        "target": "id"
+      }
+    ],
+    "dbName": "PROJECT_MEMORIES"
+  },
+  "runtime_configurations": {
+    "columns": {
+      "runtime": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "RUNTIME"
+      },
+      "enabled": {
+        "type": "BOOLEAN",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ENABLED"
+      },
+      "version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "VERSION"
+      },
+      "probe_model": {
+        "type": "VARCHAR(150)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "PROBE_MODEL"
+      },
+      "status": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATUS"
+      },
+      "verified_hash": {
+        "type": "VARCHAR(64)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "VERIFIED_HASH"
+      },
+      "result": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "RESULT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["runtime"]
+      }
+    ],
+    "foreign": [],
+    "dbName": "RUNTIME_CONFIGURATIONS"
+  },
+  "run_artifacts": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "run_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "RUN_ID"
+      },
+      "stage": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STAGE"
+      },
+      "name": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "NAME"
+      },
+      "content": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CONTENT"
+      },
+      "sha256": {
+        "type": "VARCHAR(64)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "SHA256"
+      },
+      "provider_response_id": {
+        "type": "VARCHAR(250)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "PROVIDER_RESPONSE_ID"
+      },
+      "usage": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "USAGE"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["run_id", "stage"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "run_id",
+        "table": "workflow_runs",
+        "target": "id"
+      }
+    ],
+    "dbName": "RUN_ARTIFACTS"
+  },
+  "run_events": {
+    "columns": {
+      "sequence": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": true,
+        "json": false,
+        "dbName": "SEQUENCE"
+      },
+      "run_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "RUN_ID"
+      },
+      "kind": {
+        "type": "VARCHAR(80)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "KIND"
+      },
+      "stage": {
+        "type": "VARCHAR(30)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "STAGE"
+      },
+      "payload": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "PAYLOAD"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["sequence"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "run_id",
+        "table": "workflow_runs",
+        "target": "id"
+      }
+    ],
+    "dbName": "RUN_EVENTS"
+  },
+  "tasks": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "project_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "PROJECT_ID"
+      },
+      "number": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "NUMBER"
+      },
+      "title": {
+        "type": "VARCHAR(200)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TITLE"
+      },
+      "description": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "DESCRIPTION"
+      },
+      "status": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATUS"
+      },
+      "priority": {
+        "type": "VARCHAR(20)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "PRIORITY"
+      },
+      "assignee_id": {
+        "type": "VARCHAR(36)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "ASSIGNEE_ID"
+      },
+      "sprint": {
+        "type": "VARCHAR(80)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "SPRINT"
+      },
+      "version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "VERSION"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      },
+      "updated_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "UPDATED_AT"
+      },
+      "workflow_template_id": {
+        "type": "VARCHAR(36)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "WORKFLOW_TEMPLATE_ID"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["project_id", "number"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "project_id",
+        "table": "projects",
+        "target": "id"
+      },
+      {
+        "column": "assignee_id",
+        "table": "agents",
+        "target": "id"
+      }
+    ],
+    "dbName": "TASKS"
+  },
+  "workflow_runs": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "task_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_ID"
+      },
+      "active_task_id": {
+        "type": "VARCHAR(36)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "ACTIVE_TASK_ID"
+      },
+      "task_version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "TASK_VERSION"
+      },
+      "status": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATUS"
+      },
+      "agents": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "AGENTS"
+      },
+      "context_snapshot": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "CONTEXT_SNAPSHOT"
+      },
+      "workspace_path": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "WORKSPACE_PATH"
+      },
+      "decision": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": false,
+        "identity": false,
+        "json": true,
+        "dbName": "DECISION"
+      },
+      "result_digest": {
+        "type": "VARCHAR(64)",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "RESULT_DIGEST"
+      },
+      "error": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "ERROR"
+      },
+      "created_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "CREATED_AT"
+      },
+      "updated_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "UPDATED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["active_task_id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "task_id",
+        "table": "tasks",
+        "target": "id"
+      },
+      {
+        "column": "active_task_id",
+        "table": "tasks",
+        "target": "id"
+      }
+    ],
+    "dbName": "WORKFLOW_RUNS"
+  },
+  "workflow_steps": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "run_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "RUN_ID"
+      },
+      "key": {
+        "type": "VARCHAR(40)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "KEY"
+      },
+      "kind": {
+        "type": "VARCHAR(20)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "KIND"
+      },
+      "agent_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "AGENT_ID"
+      },
+      "session_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "SESSION_ID"
+      },
+      "instructions": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "INSTRUCTIONS"
+      },
+      "depends_on": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "DEPENDS_ON"
+      },
+      "state": {
+        "type": "VARCHAR(30)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "STATE"
+      },
+      "runtime_state": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "RUNTIME_STATE"
+      },
+      "started_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "STARTED_AT"
+      },
+      "ended_at": {
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "required": false,
+        "identity": false,
+        "json": false,
+        "dbName": "ENDED_AT"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      },
+      {
+        "type": "UNIQUE",
+        "columns": ["run_id", "key"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "run_id",
+        "table": "workflow_runs",
+        "target": "id"
+      },
+      {
+        "column": "agent_id",
+        "table": "agents",
+        "target": "id"
+      },
+      {
+        "column": "session_id",
+        "table": "agent_sessions",
+        "target": "id"
+      }
+    ],
+    "dbName": "WORKFLOW_STEPS"
+  },
+  "workflow_templates": {
+    "columns": {
+      "id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "ID"
+      },
+      "project_id": {
+        "type": "VARCHAR(36)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "PROJECT_ID"
+      },
+      "name": {
+        "type": "VARCHAR(100)",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "NAME"
+      },
+      "description": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "DESCRIPTION"
+      },
+      "version": {
+        "type": "INTEGER",
+        "required": true,
+        "identity": false,
+        "json": false,
+        "dbName": "VERSION"
+      },
+      "steps": {
+        "type": "BLOB SUB_TYPE TEXT CHARACTER SET UTF8",
+        "required": true,
+        "identity": false,
+        "json": true,
+        "dbName": "STEPS"
+      }
+    },
+    "constraints": [
+      {
+        "type": "PRIMARY KEY",
+        "columns": ["id"]
+      }
+    ],
+    "foreign": [
+      {
+        "column": "project_id",
+        "table": "projects",
+        "target": "id"
+      }
+    ],
+    "dbName": "WORKFLOW_TEMPLATES"
+  }
+}

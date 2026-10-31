@@ -1,13 +1,22 @@
 {
   "name": "engineering-control-center",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "workspaces": [
-    "apps/web"
+    "apps/web",
+    "apps/api"
   ],
   "scripts": {
-    "dev": "npm run dev -w apps/web",
-    "build": "npm run build -w apps/web",
-    "typecheck": "npm run typecheck -w apps/web"
+    "dev": "node scripts/dev.mjs",
+    "start": "node scripts/dev.mjs --production",
+    "setup:firebird": "node scripts/setup-firebird.mjs",
+    "migrate": "npm run migrate -w apps/api",
+    "seed": "tsx apps/api/src/seed.ts",
+    "build": "npm run build -w apps/api && npm run build -w apps/web",
+    "typecheck": "npm run build -w apps/api && npm run typecheck -w apps/web",
+    "test": "npm run test -w apps/api"
   },
   "overrides": {
     "postcss": "8.5.32",

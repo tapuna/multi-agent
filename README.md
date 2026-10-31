@@ -1,134 +1,59 @@
 # Relay — Multi-Agent Engineering Control Center
 
-Engineering handoff and current limitations: [docs/HANDOFF.md](docs/HANDOFF.md).
-
-Next.js + FastAPI control center with **Firebird Embedded 5** as the primary database. Tasks, agents, sessions, approvals and audit history persist locally in `.data/control.fdb`. No Docker or database service is required.
+A local engineering workspace built with **TypeScript, Next.js, Fastify, LangGraph JavaScript and Firebird Embedded 5**. Kanban tasks are the system of record. No separate database service or Docker is required.
 
 ## Run locally
 
-Python 3.12+ and Node.js 22+ recommended. From PowerShell:
+Install **Node.js 22+ x64** and Git. From the repository root:
 
 ```powershell
-cd D:\Multi-agent
-# First setup only:
-python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r apps/api/requirements.lock.txt
 npm ci
-
-# Start the application (development):
-.\scripts\dev.ps1
-# Or: npm run build, then .\scripts\dev.ps1 -Production
-# Optional sample project: .\scripts\dev.ps1 -Seed
+npm run setup:firebird
+npm run dev
 ```
 
-The existing workspace already has dependencies installed and migrated Firebird data. Run only `scripts/dev.ps1`. If an earlier instance is using ports 3000/8000, stop it first. Ctrl+C stops the owned backend.
+Open http://127.0.0.1:3000. The launcher starts both Node processes, creates temporary operator credentials when absent, and applies additive database migrations. Ctrl+C stops both processes. The database is `.data/control.fdb`. `setup:firebird` downloads checksum-pinned official engine binaries into `.data/firebird-runtime`; it installs no service. Windows x64 is locally validated. Linux x64 additionally needs `libtommath1`, `libncurses6` and `tar`; container/CI execution remains to be verified on Linux.
 
-Open [Kanban](http://127.0.0.1:3000) and [API docs](http://127.0.0.1:8000/docs). The UI header reads the actual database through `/api/system` and displays **Firebird Embedded**. The launcher generates ephemeral service and human credentials if they are not already set in the process environment.
-
-The Python driver explicitly loads the embedded engine bundled inside `.venv`; nothing is installed as a Windows service. On Linux, install the system library `libtommath1` before using the embedded runtime. Codex desktop's bundled Python can create the virtual environment if Python is not on PATH: `C:/Users/Homely/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe`.
-
-## Data
-
-- Primary database: `.data/control.fdb`.
-- Firebird backups: `.data/backups/`.
-- Agent workspace directories: `workspaces/`.
-- Configure the data directory with `CONTROL_DATA_DIR`; an explicit `DATABASE_URL` overrides it.
-- All processes opening the same embedded database must use the same `FIREBIRD_LOCK` directory. The app uses `.data/firebird-lock` by default.
-
-Existing project/task/agent IDs and audit/session history persist in Firebird. Unsupported database URLs are rejected before a connection or file can be created. See [Firebird setup](docs/FIREBIRD.md).
-
-## Implemented
-
-- Project-scoped task keys; five-column Kanban and list views; task search and priority filters.
-- Task detail editing, agent assignment, priority, sprint, dependencies, sessions, approvals and audit history.
-- Enforced status transitions, optimistic versions, dependency-cycle rejection and blocked transitions.
-- Atomic audit writes with database triggers rejecting updates/deletes.
-- Human review tied to exact task versions/artifact hashes; separate verified local Git merge. No automatic push or deployment.
-- Agent registry and actual Codex, Claude, Gemini and LiteLLM API runtime adapters; provider session IDs and API conversations persist per task/agent.
-- Unique workspace directory for every prepared session; company-policy envelope and digest.
-- Project shared memory; portable JSON documents stored as Firebird text BLOBs. Vector similarity search is not implemented on Firebird.
-- Versioned standard `SKILL.md` publishing/selection and editable Company → Team → Project → Role → Task context snapshots.
-- LangGraph workflows: sequential/parallel steps, dependency handoffs, Firebird checkpoints, cancel, startup recovery and resume.
-- Isolated workspaces and optional detached Git worktrees; generated file validation, file explorer and ZIP export.
-- Live execution events, artifacts and active-agent board badges; optional S3-compatible artifact replication.
-- Alembic migrations, test suite, lockfiles and CI for Windows/Linux embedded Firebird.
-
-This is a local single-operator tool. The frontend proxy has operator authority. Public production hosting requires identity/RBAC, network restrictions and a security review. Embedded database access is controlled by filesystem permissions. CLI runtimes use read-only/planning modes; the app validates and writes generated proposals. Arbitrary generated shell commands are not executed, including in review/test stages. This is not an OS sandbox for hostile providers.
-
-## Start an agent workflow
-
-Authenticate a CLI (for example `codex login`) or configure provider credentials/local endpoint in the root `.env` using `.env.example`, then restart. In Agent Studio, register/edit agents with real model IDs. Open a task, select a workflow and agents, then click **Start workflow**. Independent roots run together; dependent stages wait for their prerequisites. Monitor shows actual `agent.started` events, names, session IDs and timestamps. Review generated artifacts and approve completion; merging is a separate human action. Runs resume from durable Firebird checkpoints. Configure reusable workflows in **Orchestration**: create/clone/edit steps and dependencies, then choose a project default. Each task can save its own workflow or inherit the default. Resolution is task → project → built-in Plan/Implement/Review; old runs retain their snapshots.
-
-On this machine Codex CLI is installed but not logged in; Claude/Gemini CLI and provider credentials are not configured. Real cloud inference requires this account setup. See the complete [Thai usage guide](docs/USER_GUIDE_TH.md).
-
-## Structure
-
-```text
-apps/web/                 Next.js, TypeScript, Tailwind, server-side API proxy
-apps/api/control/         Modular routes, models, schemas, database and runtime interfaces
-apps/api/migrations/      Core schema, audit guards and Firebird compatibility
-apps/api/tests/           Firebird integration, database configuration and lock tests
-contexts/                 Mandatory company policy and context layers
-skills/                   Versioned SKILL.md packages
-scripts/dev.ps1           Local launcher (no database service)
-docs/                     Setup, migration notes and implementation status
-```
-
-## API
-
-All `/api` routes require `X-API-Key` (service) or `X-Human-Key` (operator). The browser proxy supplies its configured human credential server-side. `/health` checks the actual database connection.
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/api/system` | Active database engine/mode |
-| GET / POST | `/api/projects` | List / create projects |
-| GET / POST | `/api/tasks` | List by project / create backlog task |
-| GET / PATCH | `/api/tasks/{id}` | Detail / versioned update |
-| POST | `/api/tasks/{id}/dependencies` | Add acyclic dependency |
-| GET / POST | `/api/agents` | List / human registration |
-| PATCH | `/api/agents/{id}` | Edit runtime/model configuration |
-| POST | `/api/tasks/{id}/workflows` | Start actual agent DAG |
-| GET | `/api/workflows/{id}` | Steps, session IDs, events, artifacts and checkpoints |
-| POST | `/api/workflows/{id}/resume` | Resume failed/interrupted execution |
-| POST | `/api/workflows/{id}/cancel` | Cancel active execution |
-| POST | `/api/workflows/{id}/decision` | Hash-bound human review |
-| POST | `/api/workflows/{id}/merge` | Human-approved local Git fast-forward |
-| GET | `/api/workflows/{id}/export` | Download generated source ZIP |
-| GET / POST | `/api/skills` | List / publish standard skill packages |
-| GET / PUT | `/api/contexts/{scope}/{target}` | Read / revision-checked context edit |
-| POST | `/api/tasks/{id}/sessions` | Prepare isolated workspace/snapshot |
-| PATCH | `/api/sessions/{id}` | Bind provider session ID once |
-| GET | `/api/sessions/{id}/resume` | Resume metadata (no execution) |
-| POST | `/api/tasks/{id}/approvals` | Human approval of a task version |
-| GET | `/api/audit` | Recent immutable audit events |
-| GET / POST | `/api/projects/{id}/memory` | Shared project knowledge |
-
-## Validation
+For a compiled local run:
 
 ```powershell
-cd D:\Multi-agent\apps\api
-../../.venv/Scripts/python.exe -m pytest tests -q
-../../.venv/Scripts/python.exe -m pip check
-cd ../..
 npm run build
+npm start
 ```
 
-Database integration tests run on actual Firebird Embedded, including native lock contention. Workflow tests cover DAG/fan-in, checkpoint/session resume, cancellation, artifact integrity, Git worktrees, human approvals and local merge. Runtime tests include real subprocesses and LiteLLM HTTP transport against a local contract server; this does not claim live cloud inference. See [implementation status](docs/IMPLEMENTATION_STATUS.md). Firebird waits up to 5 seconds per lock and returns HTTP 409 without replaying writes. Stop the frontend before building on Windows to avoid `.next` file locks.
+Optional sample tasks: `npm run seed`, or `node scripts/dev.mjs --seed`. Existing projects are not reseeded. The PowerShell compatibility entry point remains `./scripts/dev.ps1 -Production`.
 
-Optional Docker Compose remains available with the embedded Firebird engine inside the API container; no separate database container is used. It has not been locally tested because Docker is unavailable. For setup details and next steps see [Firebird notes](docs/FIREBIRD.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md).
+## Configure agents
 
-## Agent conversations
+1. Put `LLM_PROFILES_JSON` in the root `.env` as a JSON array. See `.env.example`. Store actual API keys in separate environment variables and reference their names with `api_key_env`.
+   Agent execution defaults to off when unset. Enable it explicitly with `AGENT_EXECUTION_ENABLED=1` in local configuration when ready to run providers.
+2. Restart after environment changes. Configuration → Runtime adapter setup renders each profile directly.
+3. Click **Test LLM** for each desired profile. Only that specific profile becomes Ready. Tests call the configured provider and may incur charges; opening the page makes no inference calls.
+4. Agent Studio → Register/Edit agent → choose a Ready profile. Assign versioned Skills per agent. Chat & context opens project-scoped conversations and context summaries. The compact Readiness control on each agent card performs an additional agent-specific test.
 
-In **Agent Studio → Chat & context**, chat with each agent using its configured runtime/model. Conversations persist separately per project/agent. **Generate context summary** asks that agent to summarize known context, decisions, unknowns and next information needed. The source inventory reports included project memory, own artifacts, available skills, policy hash and budget limits; **Inspect supplied context** shows the exact frozen input. This is an evidence-based context report, not a measurement of model training knowledge. Summaries do not automatically become shared project memory. Chat is text-only and does not execute task changes. See the Thai usage guide for limits, cancellation and provider authentication.
+API adapters use a TypeScript gateway: OpenAI-compatible endpoints (including local models), native Anthropic Messages, and native Gemini GenerateContent. Built-in compatible endpoints include OpenAI, Groq, DeepSeek, Mistral and OpenRouter. For other compatible providers set `api_base` explicitly and use an `openai/` model prefix. Provider coverage is intentionally explicit; this is not a claim of compatibility with every model gateway integration. API agents are text-only; tool requests are rejected. CLI adapters support Codex, Claude Code and Gemini CLI with native login, bounded execution and provider session IDs. Native binaries and standard npm CLI shims are supported; arbitrary shell wrappers are rejected.
 
+## Workflow and approvals
 
-Skills are assigned per agent in **Agent Studio → Skills**, with one pinned version per package (maximum 10). Skill Registry remains the central publishing library. Workflow steps, prepared sessions and agent chat use only that agent's assigned packages; no assignment means an empty skill set. New runs snapshot assignments and contents. The former workflow-wide skill picker is removed; legacy `skill_refs` requests return 422 with configuration guidance. `GET/PUT /api/agents/{id}/skills` supports version-checked updates.
+Task workflow > project default > built-in default. Templates support 1–12 steps, dependencies, parallel branches and agent overrides. Start workflow explicitly from a task. LangGraph runs up to three nodes concurrently, persists checkpoints to Firebird, saves handoffs/artifacts, and interrupts for human review. Approval checks task version, company policy and artifact digest. Merge is a separate human action, limited to a local fast-forward of reviewed generated files. No automatic push or deployment.
 
+Each run and agent session has an isolated directory; configured Git projects use detached worktrees. Skills are standard immutable `SKILL.md` packages. Company policy is a separate mandatory envelope. Shared project memory contains supplied notes and approved run summaries. Audit records are append-only at database level.
 
-**Agent Studio → Readiness → Test** verifies each configured agent with a tiny actual provider request. Preflight (installation/configuration) is separate from a verified fresh provider response. Tests are human-triggered, audited, isolated, bounded and may incur provider charges. Results show latency, actionable errors and stale configuration status. No project data is transmitted by a diagnostic.
+## Migrating this checkout
 
+The former backend has been replaced, including APIs, runtime adapters, gateway, migrations and orchestration. Existing Firebird schema through revision 0011 is adopted in place; tasks, agents, audit history, conversations and artifacts remain. New checkpoints use a separate `nodejs:` namespace. Old graph serialization is retained as history, not deserialized by JavaScript. Existing unfinished runs with incompatible frozen configuration must be cancelled and started fresh. LLM profiles must be tested again after migration because readiness hashes changed. Existing agents with literal model IDs must select a tested profile.
 
-Runtime lifecycle: **LLM_PROFILES_JSON → restart → Configuration → Runtime adapter setup → Test LLM for each profile → Ready → register agent**. Setup renders the environment array directly. Each profile needs its own successful provider test; passing one API profile never enables another. Registration, editing and execution enforce the exact selected profile server-side. Changed credentials/configuration, disabled profiles or missing CLI executables block use and show warnings. Tests work before any agent exists and send no project data. Migration 0011 persists profile readiness and audit history; interrupted tests are not automatically replayed.
+The old local environment folder can remain on disk but is not used. There is no application dependency on its interpreter, packages or engine path. Old code remains recoverable through Git history. Do not copy an open embedded database file as a backup; stop both processes first.
 
+## Checks
 
-Set **LLM_PROFILES_JSON** in the root `.env` to a JSON array of `{id, label, runtime, model, enabled, api_base?, api_key_env?}`. See `.env.example` for a one-line value. Secrets stay in separate environment variables referenced by name. Restart, test each profile in runtime Setup, then select a Ready profile in Agent Studio. Each profile routes independently; adding supported connections does not require source edits. When the array is configured, existing agents with literal model IDs must select a tested profile before execution. Legacy global configuration remains supported only without a profile array.
+```powershell
+npm run typecheck
+npm test
+```
+
+`npm test` is one focused integration smoke test: fresh Firebird schema, Unicode persistence, immutable audit, profile isolation, LangGraph checkpoint/human approval and agent context-summary chat. It uses three local HTTP contract responses and no cloud inference. The broad old test suite was retired with the replaced implementation. Testing is kept small while the operator reviews the app.
+
+## Boundaries
+
+This is a local single-operator application, not an Internet-facing multi-tenant service. There is no background task-claim scheduler, task comment thread, arbitrary generated command/test execution, deployment runner or production RBAC. Agents must not claim tests ran without evidence. Firebird is the only database in this build; vector search is not implemented. Optional S3 replication and container definitions exist but were not exercised in this migration. See [handoff](docs/HANDOFF.md) and [Thai guide](docs/USER_GUIDE_TH.md).
