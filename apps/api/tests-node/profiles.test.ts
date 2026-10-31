@@ -8,7 +8,7 @@ import {
   profileLog,
   catalog,
 } from "../src/profiles.js";
-import { CLIAdapter } from "../src/runtime.js";
+import { CLIAdapter, APIAdapter } from "../src/runtime.js";
 
 test("CLI profiles may omit model without changing runtime restrictions", () => {
   const saved = { ...process.env };
@@ -90,7 +90,7 @@ test("API profiles still reject a missing or blank model", () => {
   }
 });
 
-test("Disabled execution is visible as a preflight blocker without starting a runtime", () => {
+test("Readiness checks remain available when task execution is disabled", () => {
   const saved = { ...process.env };
   try {
     process.env.LLM_PROFILES_JSON = JSON.stringify([
@@ -99,9 +99,14 @@ test("Disabled execution is visible as a preflight blocker without starting a ru
     process.env.AGENT_EXECUTION_ENABLED = "0";
     process.env.CONTROL_ALLOWED_MODELS = "";
     const checks = profileChecks(profiles()[0], true);
-    assert.equal(checks[0].ok, false);
-    assert.match(checks[0].detail, /AGENT_EXECUTION_ENABLED=1/);
-    assert.match(checks[0].detail, /No CLI\/API request has started/);
+    assert.equal(
+      checks.every((c) => c.ok),
+      true,
+    );
+    assert.equal(
+      checks.some((c) => c.name === "Execution enabled"),
+      false,
+    );
     process.env.AGENT_EXECUTION_ENABLED = "1";
     assert.equal(
       profileChecks(profiles()[0], true).every((c) => c.ok),
@@ -143,8 +148,8 @@ test("Public test logs redact keys, verification tokens and terminal controls", 
       ],
     };
     const rows = await catalog(tx as any);
-    assert.equal(rows[0].can_test, false);
-    assert.ok(rows[0].test_blockers.length);
+    assert.equal(rows[0].can_test, true);
+    assert.equal(rows[0].test_blockers.length, 0);
     assert.equal(rows[0].test_result?.logs.length, 1);
     assert.equal(JSON.stringify(rows).includes(secret), false);
     assert.equal(
@@ -152,6 +157,86 @@ test("Public test logs redact keys, verification tokens and terminal controls", 
       false,
     );
   } finally {
+    for (const key of Object.keys(process.env))
+      if (!(key in saved)) delete process.env[key];
+    Object.assign(process.env, saved);
+  }
+});
+
+test("API diagnostics bypass only the task execution flag, retaining model gates", async () => {
+  const saved = { ...process.env },
+    fetchBefore = globalThis.fetch;
+  let calls = 0;
+  try {
+    process.env.AGENT_EXECUTION_ENABLED = "0";
+    process.env.CONTROL_ALLOWED_MODELS = "";
+    process.env.LLM_PROFILES_JSON = JSON.stringify([
+      {
+        id: "check",
+        runtime: "api",
+        model: "openai/unit",
+        api_base: "http://127.0.0.1:1234/v1",
+      },
+    ]);
+    globalThis.fetch = async () => {
+      calls++;
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "verification-ok" } }],
+        }),
+        { headers: { "content-type": "application/json" } },
+      );
+    };
+    const adapter = new APIAdapter(),
+      request = {
+        model: "profile:check",
+        workspace: ".",
+        prompt: "verification only",
+      };
+    assert.equal(
+      (
+        await adapter.run(
+          { ...request, purpose: "diagnostic" },
+          () => {},
+          async () => {},
+        )
+      ).content,
+      "verification-ok",
+    );
+    assert.equal(calls, 1);
+    await assert.rejects(
+      adapter.run(
+        { ...request, purpose: "workflow" },
+        () => {},
+        async () => {},
+      ),
+      /disabled/,
+    );
+    assert.equal(calls, 1);
+    process.env.CONTROL_ALLOWED_MODELS = "another-model";
+    await assert.rejects(
+      adapter.run(
+        { ...request, purpose: "diagnostic" },
+        () => {},
+        async () => {},
+      ),
+      /not allowed/,
+    );
+    assert.equal(calls, 1);
+    process.env.CONTROL_ALLOWED_MODELS = "";
+    process.env.LLM_PROFILES_JSON = JSON.stringify([
+      { id: "check", runtime: "api", model: "openai/unit", enabled: false },
+    ]);
+    await assert.rejects(
+      adapter.run(
+        { ...request, purpose: "diagnostic" },
+        () => {},
+        async () => {},
+      ),
+    );
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = fetchBefore;
     for (const key of Object.keys(process.env))
       if (!(key in saved)) delete process.env[key];
     Object.assign(process.env, saved);

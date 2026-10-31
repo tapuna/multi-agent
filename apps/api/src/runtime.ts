@@ -65,7 +65,7 @@ export class APIAdapter implements RuntimeAdapter {
   async run(r: RuntimeRequest, on: EventSink, check: () => Promise<void>) {
     await check();
     demand(
-      executionEnabled() && allowed(r.model),
+      (r.purpose === "diagnostic" || executionEnabled()) && allowed(r.model),
       409,
       "Model execution disabled or not allowed",
     );

@@ -25,11 +25,11 @@ npm run dev
 ## ตั้งค่า LLM และลงทะเบียน agent
 
 1. แก้ `.env` ที่ root กำหนด `LLM_PROFILES_JSON` เป็น JSON array ตามตัวอย่างในไฟล์ และใส่ key จริงในตัวแปรที่ `api_key_env` อ้างถึง
-2. เมื่อต้องการทดสอบหรือเรียกโมเดล ตั้ง `AGENT_EXECUTION_ENABLED=1` แล้ว restart แอป
+2. Restart แอปหลังแก้ `.env` การกด **Test LLM** ไม่ขึ้นกับ `AGENT_EXECUTION_ENABLED` จะทดสอบได้แม้เป็น `0` เมื่อต้องการให้ agent ทำงานใน task/workflow จึงตั้งค่านี้เป็น `1`
 3. เปิด **Configuration → Runtime adapter setup** แต่ละรายการใน array จะแสดงเป็นการ์ด กด **Test LLM** ของ profile ที่ต้องการจนเป็น **Ready**
 4. เปิด **Agent Studio → Register/Edit agent** เลือก runtime และ profile ที่ Ready แล้วกำหนด role และ Skills ให้ agent นั้น
 
-หาก Test LLM ถูกปิดและแสดง **Blocked** ให้ดู **Test details & logs** บนการ์ด จะเห็น preflight ที่ไม่ผ่านและวิธีแก้ เช่น execution ยังปิดอยู่ กรณีนี้ยังไม่เรียก CLI จึงไม่มี log จาก provider เมื่อเริ่มทดสอบจริงแล้วจะแสดง progress/events, stderr และผลล่าสุด พร้อมเวลา โดยเก็บข้อความล่าสุดแบบจำกัดและปิดบังค่า credential
+หาก Test LLM ถูกปิดและแสดง **Blocked** ให้ดู **Test details & logs** บนการ์ด จะเห็น preflight ที่ไม่ผ่านและวิธีแก้ เช่น profile ปิดอยู่, ไม่พบ CLI, ขาด credential หรือไม่ผ่าน model allowlist โดย `AGENT_EXECUTION_ENABLED=0` ไม่เป็นตัวบล็อกการทดสอบ เมื่อเริ่มทดสอบจริงจะแสดง progress/events, stderr และผลล่าสุด พร้อมเวลา โดยเก็บข้อความล่าสุดแบบจำกัดและปิดบังค่า credential
 
 แต่ละ profile ต้องผ่านการทดสอบของตัวเอง ผลผ่านของ A ไม่ปลดล็อก B แม้ใช้ runtime เดียวกัน เปลี่ยน model, endpoint, credential หรือปิด profile แล้ว restart จะต้องตรวจความพร้อมใหม่ การกดทดสอบเรียก provider จริงและอาจมีค่าบริการ การเปิดหน้าจอเฉย ๆ ไม่เรียกโมเดล
 

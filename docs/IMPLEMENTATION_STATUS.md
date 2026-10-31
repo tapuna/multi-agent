@@ -1,6 +1,6 @@
 # Node.js migration status
 
-Latest follow-up: profile Setup includes explicit preflight blockers and Test details & logs. With the operator's execution flag off, UI shows Blocked, disables the test button and explains that no CLI/API was started. Real test attempts retain a bounded sanitized log tail in Firebird, including progress, CLI event types, stderr and completion/failure. Backend/frontend build and five focused no-inference checks passed; the blocked UI was inspected on localhost. No provider invocation or environment enablement change was made.
+Latest follow-up: Test LLM and per-agent readiness checks are independent of AGENT_EXECUTION_ENABLED, including API gateway and background test checks. The flag still gates task/workflow execution. Profile enablement, installed runtime, credential, allowlist, human authorization and test logs remain enforced. Six focused no-inference checks pass, including a mocked API diagnostic with flag 0 and rejection of workflow/disallowed-model requests; backend compilation passes. The operator's .env flag stays 0.
 
 Updated: 2026-10-31 (Asia/Bangkok). Code validation below refers to implementation commit 159f4be. The subsequent documentation refresh validated examples, links and live read-only API metadata only; it did not rerun build or inference tests. See [HANDOFF.md](HANDOFF.md) for current continuation notes and [README.md](../README.md) for startup.
 

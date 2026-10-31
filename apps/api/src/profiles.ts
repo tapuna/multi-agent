@@ -241,13 +241,11 @@ export async function catalog(tx: Tx) {
           ? {
               message: redact(String(result.message || "")),
               logs: Array.isArray(result.logs)
-                ? result.logs
-                    .slice(-40)
-                    .map((l: any) => ({
-                      at: String(l.at || ""),
-                      kind: String(l.kind || "info"),
-                      message: profileLog(String(l.message || "")),
-                    }))
+                ? result.logs.slice(-40).map((l: any) => ({
+                    at: String(l.at || ""),
+                    kind: String(l.kind || "info"),
+                    message: profileLog(String(l.message || "")),
+                  }))
                 : [],
             }
           : null,
@@ -257,13 +255,6 @@ export async function catalog(tx: Tx) {
 }
 export function profileChecks(p: Profile, installed: boolean) {
   return [
-    {
-      name: "Execution enabled",
-      ok: executionEnabled(),
-      detail: executionEnabled()
-        ? "Agent execution is enabled."
-        : "Execution disabled: set AGENT_EXECUTION_ENABLED=1 in the root .env and restart the application. No CLI/API request has started.",
-    },
     {
       name: "Profile enabled",
       ok: p.enabled,

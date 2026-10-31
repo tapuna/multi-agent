@@ -4,16 +4,7 @@ import { z } from "zod";
 import type { FastifyInstance } from "fastify";
 import { route, text, id } from "./http.js";
 import { transaction, type Tx, type Row } from "./db.js";
-import {
-  WORK,
-  human,
-  demand,
-  hash,
-  stable,
-  uid,
-  now,
-  executionEnabled,
-} from "./config.js";
+import { WORK, human, demand, hash, stable, uid, now } from "./config.js";
 import {
   profiles,
   runtimes,
@@ -67,8 +58,7 @@ async function testProfile(
         const r = await tx.one("llm_readiness", profileId),
           p = profiles().find((p) => p.id === profileId);
         demand(
-          executionEnabled() &&
-            p?.enabled &&
+          p?.enabled &&
             fingerprint(p) === expected &&
             r.version === version &&
             r.status === "running",
@@ -165,7 +155,6 @@ async function preflight(tx: Tx, a: Row) {
   const s = await readiness(tx, a.model, a.runtime);
   return [
     { name: "Agent enabled", ok: a.enabled },
-    { name: "Execution enabled", ok: executionEnabled() },
     { name: s.reason, ok: s.available },
     { name: "Runtime installed", ok: !!executable(a.runtime) },
   ];
@@ -260,11 +249,6 @@ export function agentRoutes(app: FastifyInstance) {
     z.strictObject({}),
     async ({ tx, actor, params: p, defer }) => {
       human(actor);
-      demand(
-        executionEnabled(),
-        409,
-        "Execution disabled: set AGENT_EXECUTION_ENABLED=1 in the root .env and restart the application. No CLI/API request has started.",
-      );
       const profile = profiles().find((x) => x.id === p.profile_id);
       demand(profile, 404, "Profile not found in LLM_PROFILES_JSON");
       const state = await readiness(

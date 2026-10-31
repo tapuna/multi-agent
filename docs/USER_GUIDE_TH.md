@@ -27,7 +27,7 @@ npm start
 ## ตั้งค่า LLM และ agent
 
 1. ตั้ง `LLM_PROFILES_JSON` ใน `.env` ที่ root เป็น array ตาม `.env.example` แต่ละรายการมี id, label, runtime, model, enabled และ API ใช้ api_base/api_key_env ได้
-   หากยังไม่กำหนด `AGENT_EXECUTION_ENABLED` ระบบเริ่มปิดการเรียก agent ไว้ ตั้ง `AGENT_EXECUTION_ENABLED=1` เมื่อพร้อมใช้งาน provider แล้ว restart
+   `AGENT_EXECUTION_ENABLED=0` ปิดการทำงาน task/workflow แต่กด Test LLM และทดสอบ Readiness ได้ตามปกติ ตั้งค่านี้เป็น `1` เมื่อต้องการให้ agent ทำงานใน task/workflow แล้ว restart
 2. `api_key_env` คือชื่อ environment variable ที่เก็บ key จริง ไม่ใส่ key ใน JSON หรือข้อความงาน ค่า key ไม่ส่งไป browser
 3. Restart แอป แล้วเปิด Configuration → Runtime adapter setup จะเห็นการ์ดตามรายการใน JSON
 4. กด **Test LLM** ของแต่ละ profile ให้เป็น **Ready** ก่อน การผ่าน A ไม่เปิด B แม้ใช้ runtime เดียวกัน การทดสอบเรียก provider จริงและอาจมีค่าบริการ
